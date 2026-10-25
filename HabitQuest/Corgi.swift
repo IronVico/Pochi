@@ -137,7 +137,7 @@ struct PixelCorgi: View {
     @State private var blink = false
     @State private var excitedUntil = Date.distantPast
 
-    private static let pixel: CGFloat = 4
+    private static let pixel: CGFloat = 3
     /// 30 × 16: Pochi is 24 wide, the extra room in front of it is for the phone.
     private static let width = 30
     private static let frame: Duration = .milliseconds(70)
@@ -193,8 +193,9 @@ struct PixelCorgi: View {
 
     var body: some View {
         let p = Self.pixel
-        // Every pose but the phone is drawn centred in the wider canvas.
-        let layers = pose == .phone ? layers : layers.map { Layer(grid: $0.grid, pixels: $0.pixels, x: $0.x + 3, y: $0.y) }
+        // Pushed against the right edge, next to the speech bubble.
+        let shift = 6
+        let layers = layers.map { Layer(grid: $0.grid, pixels: $0.pixels, x: $0.x + shift, y: $0.y) }
         let hop = excited && pose != .box && (tick / 3) % 2 == 0
 
         Canvas { ctx, _ in
@@ -206,7 +207,7 @@ struct PixelCorgi: View {
             }
             if pose == .phone {
                 // Blue glow of the screen on Pochi's face.
-                let center = CGPoint(x: 12 * p, y: 9 * p)
+                let center = CGPoint(x: 18 * p, y: 9 * p)
                 ctx.fill(Path(ellipseIn: CGRect(x: center.x - 6 * p, y: center.y - 6 * p, width: 12 * p, height: 12 * p)),
                          with: .radialGradient(Gradient(colors: [Color(hex: 0x7CC4FF).opacity(0.4), .clear]),
                                                center: center, startRadius: 0, endRadius: 6 * p))
@@ -222,8 +223,8 @@ struct PixelCorgi: View {
         .offset(y: hop ? -p : 0)
         .overlay(alignment: .topLeading) {
             switch pose {
-            case .sleeping: Zzz().offset(x: 17 * p, y: -2 * p)
-            case .happy: Hearts().offset(x: 9 * p, y: -p)
+            case .sleeping: Zzz().offset(x: 20 * p, y: -2 * p)
+            case .happy: Hearts().offset(x: 12 * p, y: -p)
             default: EmptyView()
             }
         }
@@ -294,21 +295,34 @@ private struct Hearts: View {
 
 // MARK: - Speech bubble
 
-/// Monospaced bubble that types its text out.
+/// Pixel-art dialogue bubble: stepped corners, a tail pointing at Pochi, a name tag,
+/// and a line typed out with a cursor. The bubble hugs its text, but the space it sits in
+/// is always 3 lines high so the screen below never moves.
 struct SpeechBubble: View {
     let text: String
     @State private var shown = 0
 
+    private static let font = Font.system(size: 15, weight: .regular, design: .monospaced)
+    private static let fill = Color(white: 0.13)
+
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            Text(text).hidden()
-            Text(text.prefix(shown))
+        ZStack(alignment: .leading) {
+            // Reserves the height of a full 3-line bubble.
+            bubble { Text(" ").lineLimit(3, reservesSpace: true) }
+                .hidden()
+
+            bubble {
+                ZStack(alignment: .topLeading) {
+                    Text(text).hidden()
+                    Text(text.prefix(shown)) + Text(shown < text.count ? "▌" : "").foregroundColor(Theme.accent)
+                }
+                .lineLimit(3)
+            }
+            .id(text)
+            .transition(.scale(scale: 0.92, anchor: .leading).combined(with: .opacity))
         }
-        .font(.system(size: 16, weight: .regular, design: .monospaced))
-        .foregroundStyle(.white)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(Color(white: 0.12), in: .rect(cornerRadius: 20))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: text)
         .task(id: text) {
             shown = 0
             for i in 1...max(text.count, 1) {
@@ -316,6 +330,56 @@ struct SpeechBubble: View {
                 shown = i
             }
         }
+    }
+
+    private func bubble(@ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("POCHI")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .tracking(2)
+                .foregroundStyle(Theme.accent)
+            content()
+                .font(Self.font)
+                .foregroundStyle(.white)
+        }
+        .padding(.leading, PixelBubble.tail + 14)
+        .padding(.trailing, 14)
+        .padding(.vertical, 12)
+        .background(PixelBubble().fill(Self.fill))
+    }
+}
+
+/// A rectangle with stepped pixel corners and a stepped tail on the left.
+struct PixelBubble: Shape {
+    static let unit: CGFloat = 3
+    static var tail: CGFloat { unit * 3 }
+
+    func path(in rect: CGRect) -> Path {
+        let u = Self.unit
+        let l = rect.minX + Self.tail, r = rect.maxX, t = rect.minY, b = rect.maxY
+        let cy = (rect.minY + rect.maxY) / 2
+        var p = Path()
+        p.move(to: CGPoint(x: l + 2 * u, y: t))
+        p.addLines([
+            // Top-right corner
+            CGPoint(x: r - 2 * u, y: t), CGPoint(x: r - 2 * u, y: t + u), CGPoint(x: r - u, y: t + u),
+            CGPoint(x: r - u, y: t + 2 * u), CGPoint(x: r, y: t + 2 * u),
+            // Bottom-right corner
+            CGPoint(x: r, y: b - 2 * u), CGPoint(x: r - u, y: b - 2 * u), CGPoint(x: r - u, y: b - u),
+            CGPoint(x: r - 2 * u, y: b - u), CGPoint(x: r - 2 * u, y: b),
+            // Bottom-left corner
+            CGPoint(x: l + 2 * u, y: b), CGPoint(x: l + 2 * u, y: b - u), CGPoint(x: l + u, y: b - u),
+            CGPoint(x: l + u, y: b - 2 * u), CGPoint(x: l, y: b - 2 * u),
+            // Tail, stepping out towards Pochi
+            CGPoint(x: l, y: cy + 2 * u), CGPoint(x: l - 3 * u, y: cy + 2 * u), CGPoint(x: l - 3 * u, y: cy + u),
+            CGPoint(x: l - 2 * u, y: cy + u), CGPoint(x: l - 2 * u, y: cy), CGPoint(x: l - u, y: cy),
+            CGPoint(x: l - u, y: cy - u), CGPoint(x: l, y: cy - u),
+            // Top-left corner
+            CGPoint(x: l, y: t + 2 * u), CGPoint(x: l + u, y: t + 2 * u), CGPoint(x: l + u, y: t + u),
+            CGPoint(x: l + 2 * u, y: t + u),
+        ])
+        p.closeSubpath()
+        return p
     }
 }
 

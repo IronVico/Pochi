@@ -48,7 +48,7 @@ struct TodayView: View {
                     .padding(.top, 14)
 
                 // Corgi
-                HStack(alignment: .center, spacing: 14) {
+                HStack(alignment: .center, spacing: 4) {
                     PixelCorgi(pose: mood.pose) { nudge += 1 }
                         .id(mood.pose)
                         .transition(.scale(scale: 0.6).combined(with: .opacity))
