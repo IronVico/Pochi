@@ -2,193 +2,258 @@ import SwiftUI
 
 // MARK: - Pixel corgi
 
+/// Pochi, the corgi from the portfolio (portfolio/src/components/pochi/PochiSprite.tsx),
+/// adapted into one pose per mood.
 enum CorgiPose {
-    case box, sleeping, lying, sitting, happy
+    case box, sleeping, phone, lying, standing, happy
 }
 
-/// A sprite placed on the corgi's 26×18 pixel canvas.
-private struct Layer {
-    let sprite: [String]
+private struct Pixel {
     let x: Int
     let y: Int
+    let c: Character
 }
 
-/// K outline · O fur · W cream · P pink · E eye · B/D cardboard.
-private enum Sprites {
-    static let loaf = [
-        "..............KK.......KK.",
-        "..............KOK.....KOK.",
-        "..............KPOKKKKKOPK.",
-        "..............KPOOOWOOOPK.",
-        "...KKKKKKKKKKKKOOOOWOOOOK.",
-        "..KOOOOOOOOOOOKOEOOWOOEOK.",
-        ".KOOOOOOOOOOOOKOOOWWWOOOK.",
-        ".KOOOOOOOOOOOOOKOWWKWWOK..",
-        ".KOOOOOOOOOOOOOKWWWWWWWK..",
-        ".KOOOOOOOOOOOOOOKWWPWWK...",
-        ".KWWOOOOOOOOOOOOKWWWKWWWK.",
-        "..KKKKKKKKKKKKKKKKKKKKKKK.",
+private enum Pochi {
+    static let palette: [Character: Color] = [
+        "K": Color(hex: 0x2B1D16), // outline
+        "O": Color(hex: 0xE8913A), // red fur
+        "D": Color(hex: 0xC46F2A), // fur shadow
+        "W": Color(hex: 0xFFF6EA), // white (blaze, muzzle, chest, socks)
+        "P": Color(hex: 0xF4A3A3), // inner ears, tongue
+        "N": Color(hex: 0x120C09), // nose
+        "S": Color(hex: 0xE6D6C3), // far-side socks, in shadow
+        "C": Color(hex: 0xC8925A), // cardboard
+        "X": Color(hex: 0x8C5C30), // cardboard shadow
+        "L": Color(hex: 0xBFE3FF), // phone screen
+        "M": Color(hex: 0x5B8FCB), // lines on the screen
     ]
 
+    // 24 × 16, head three-quarters to the left, body in profile, short legs.
+    static let standing = [
+        "..KK......KK............",
+        ".KOOK....KOOK...........",
+        ".KOPOK..KOPOK...........",
+        ".KOPPOKKOPPOK...........",
+        "KOOOOOWWOOOOOKKKKKKKKK..",
+        "KOOKOOWWOOKOOOOOOOOOOOK.",
+        "KOOKOWWWWOKOOOOOOOOOOOOK",
+        "KOOWWWNNWWWOOOOOOOOOOOOK",
+        ".KOWWWWWWWWOOOOOOOOOOODK",
+        "..KWWWWWWWKOOOOOOOOOOODK",
+        "...KWWWWWWOOOOOOOOOOODDK",
+        "...KWWWWWWWOOOOOOOOODDK.",
+        "....KWWWWWWWWWWWWWWWWDK.",
+        "....KWWKSSKKKKKKKWWKSSK.",
+        "....KWWKSSK.....KWWKSSK.",
+        "....KKKKKKK.....KKKKKKK.",
+    ]
+
+    /// Same Pochi with the legs tucked under: belly on the floor.
+    static let lying = Array(standing.prefix(13)) + ["....KKKKKKKKKKKKKKKKKKK."]
+
+    /// Sitting upright, three-quarters: big head, small body, tail plume on the side.
+    static let sitting = [
+        "..KK......KK....",
+        ".KOOK....KOOK...",
+        ".KOPOK..KOPOK...",
+        ".KOPPOKKOPPOK...",
+        "KOOOOOWWOOOOK...",
+        "KOOKOOWWOOKOK...",
+        "KOOKOWWWWOKOK...",
+        "KOOWWWNNWWWOK...",
+        ".KOWWWWWWWWK....",
+        "..KWWWWWWWKOK.KK",
+        "..KWWWWWWWOOOKOK",
+        "..KWWWWWWOOOOOOK",
+        "..KWWKWWWOOOODK.",
+        "..KWWKWWKOOODDK.",
+        "..KWWKWWKWWWDK..",
+        "..KKKKKKKKKKKK..",
+    ]
+
+    /// Just the head, closed on the right, to peek out of the box.
     static let head = [
-        "KK.......KK",
-        "KOK.....KOK",
-        "KPOKKKKKOPK",
-        "KPOOOWOOOPK",
-        "KOOOOWOOOOK",
-        "KOEOOWOOEOK",
-        "KOOOWWWOOOK",
-        ".KOWWKWWOK.",
-        ".KWWWWWWWK.",
-        "..KWWPWWK..",
-    ]
-
-    static let sittingBody = [
-        "..KOOWWWWWOOK...",
-        ".KOOOWWWWWOOOK..",
-        ".KOOOWWWWWOOOK..",
-        ".KOOOWWWWWOOOOK.",
-        ".KOOKWWKWWKOOOK.",
-        ".KOOKWWKWWKOOOK.",
-        ".KOOKWWKWWKOOOK.",
-        ".KKKKKKKKKKKKKK.",
+        "..KK......KK.",
+        ".KOOK....KOOK",
+        ".KOPOK..KOPOK",
+        ".KOPPOKKOPPOK",
+        "KOOOOOWWOOOOK",
+        "KOOKOOWWOOKOK",
+        "KOOKOWWWWOKOK",
+        "KOOWWWNNWWWOK",
+        ".KOWWWWWWWWK.",
+        "..KWWWWWWWK..",
     ]
 
     static let box = [
         "KKKKKKKKKKKKKKKK",
-        "KBBBBBBDDBBBBBBK",
-        "KBBBBBBDDBBBBBBK",
-        "KBBBBBBDDBBBBBBK",
-        "KBBBBBBBBBBBBBBK",
-        "KBBBBBBBBBBBBBBK",
-        "KDDDDDDDDDDDDDDK",
+        "KCCCCCCXXCCCCCCK",
+        "KCCCCCCXXCCCCCCK",
+        "KCCCCCCXXCCCCCCK",
+        "KCCCCCCCCCCCCCCK",
+        "KXXXXXXXXXXXXXXK",
         "KKKKKKKKKKKKKKKK",
     ]
-    static let leftFlap = ["BK.", "KBK", ".KB"]
-    static let rightFlap = [".KB", "KBK", "BK."]
+    static let leftFlap = ["CK.", "KCK", ".KC"]
+    static let rightFlap = [".KC", "KCK", "CK."]
 
-    static let tongue = ["P", "P"]
-    static let blush = ["P"]
+    /// Phone outline; the screen inside is drawn per frame so it scrolls.
+    static let phone = [
+        "KKKK",
+        "K..K",
+        "K..K",
+        "K..K",
+        "KKKK",
+    ]
+
+    /// Closed eyelids: the 2-px eyes turn back to fur, a line stays at the bottom.
+    static let blink = [Pixel(x: 3, y: 5, c: "O"), Pixel(x: 10, y: 5, c: "O")]
+    /// Open mouth under the nose, pink tongue.
+    static let tongue = [Pixel(x: 6, y: 8, c: "P"), Pixel(x: 7, y: 8, c: "P"), Pixel(x: 7, y: 9, c: "P")]
+    /// Tail plume, flashed on and off to wag.
+    static let tail = [
+        Pixel(x: 22, y: 2, c: "K"), Pixel(x: 23, y: 2, c: "K"), Pixel(x: 21, y: 3, c: "K"),
+        Pixel(x: 22, y: 3, c: "O"), Pixel(x: 23, y: 3, c: "K"), Pixel(x: 22, y: 4, c: "O"),
+        Pixel(x: 23, y: 4, c: "K"),
+    ]
 }
 
-/// A pixel-art corgi whose pose and animation follow your day. Tap it to make it hop.
+/// A drawable piece placed on the canvas: a grid, or loose pixels.
+private struct Layer {
+    var grid: [String] = []
+    var pixels: [Pixel] = []
+    var x = 0
+    var y = 0
+}
+
+/// Pochi, whose pose follows your day. Frame-by-frame animation, in the spirit of a sprite.
+/// Tap it and it gets happy for a moment.
 struct PixelCorgi: View {
     let pose: CorgiPose
     var onTap: () -> Void = {}
 
-    @State private var tick = 0
+    @State private var tick = 0 // ~14 fps
     @State private var blink = false
-    @State private var breathe = false
-    @State private var bounce = false
-    @State private var hop = false
+    @State private var excitedUntil = Date.distantPast
 
     private static let pixel: CGFloat = 4
-    private static let size = (width: 26, height: 18)
+    /// 30 × 16: Pochi is 24 wide, the extra room in front of it is for the phone.
+    private static let width = 30
+    private static let frame: Duration = .milliseconds(70)
+
+    private var excited: Bool { pose == .happy || excitedUntil > .now }
 
     private var layers: [Layer] {
-        switch pose {
-        case .sleeping, .lying:
-            return [Layer(sprite: Sprites.loaf, x: 0, y: 6)]
-        case .sitting, .happy:
-            var layers = [
-                Layer(sprite: Sprites.sittingBody, x: 5, y: 10),
-                Layer(sprite: Sprites.head, x: 7, y: 0),
-            ]
-            if tick % 2 == 0 { layers.append(Layer(sprite: Sprites.tongue, x: 12, y: 10)) }
-            if pose == .happy {
-                layers.append(Layer(sprite: Sprites.blush, x: 8, y: 6))
-                layers.append(Layer(sprite: Sprites.blush, x: 16, y: 6))
-            }
-            return layers
-        case .box:
-            // Peeks out, then ducks back in every few seconds.
-            let peek = (tick / 5) % 3 == 2 ? 2 : 0
-            return [
-                Layer(sprite: Sprites.head, x: 7, y: 2 + peek),
-                Layer(sprite: Sprites.box, x: 5, y: 10),
-                Layer(sprite: Sprites.leftFlap, x: 2, y: 7),
-                Layer(sprite: Sprites.rightFlap, x: 21, y: 7),
-            ]
-        }
-    }
+        let eyesClosed = pose == .sleeping || blink
+        // Idle: two quick flicks every ~3.6 s. Excited: steady wag.
+        let idleFlick = [41, 42, 45, 46].contains(tick % 51)
+        let tailUp = excited ? (tick / 2) % 2 == 0 : idleFlick
 
-    private static func color(_ c: Character) -> Color? {
-        switch c {
-        case "K", "E": Color(red: 0.16, green: 0.09, blue: 0.05)
-        case "O": Color(red: 0.89, green: 0.58, blue: 0.29)
-        case "W": Color(red: 0.98, green: 0.93, blue: 0.86)
-        case "P": Color(red: 0.93, green: 0.55, blue: 0.60)
-        case "B": Color(red: 0.78, green: 0.57, blue: 0.35)
-        case "D": Color(red: 0.55, green: 0.36, blue: 0.19)
-        default: nil
+        switch pose {
+        case .box:
+            let peek = (tick / 25) % 3 == 2 ? 2 : 0
+            var layers = [Layer(grid: Pochi.head, x: 5, y: 1 + peek)]
+            if eyesClosed { layers.append(Layer(pixels: Pochi.blink, x: 5, y: 1 + peek)) }
+            if excited { layers.append(Layer(pixels: Pochi.tongue, x: 5, y: 1 + peek)) }
+            layers += [
+                Layer(grid: Pochi.box, x: 4, y: 9),
+                Layer(grid: Pochi.leftFlap, x: 1, y: 6),
+                Layer(grid: Pochi.rightFlap, x: 20, y: 6),
+            ]
+            return layers
+        case .phone:
+            // Sitting up, phone held in both front paws, half-closed eyes looking down at it.
+            let scroll = (tick / 5) % 4
+            var screen: [Pixel] = []
+            for row in 0..<3 {
+                let line = (row + scroll) % 2 == 0
+                for col in 0..<2 { screen.append(Pixel(x: col, y: row, c: line && col == 0 ? "M" : "L")) }
+            }
+            let paws = [Pixel(x: 2, y: 12, c: "W"), Pixel(x: 7, y: 12, c: "W"),
+                        Pixel(x: 2, y: 13, c: "K"), Pixel(x: 7, y: 13, c: "K")]
+            return [
+                Layer(grid: Pochi.sitting, x: 7, y: 0),
+                Layer(pixels: Pochi.blink, x: 7, y: 0),
+                Layer(grid: Pochi.phone, x: 10, y: 10),
+                Layer(pixels: screen, x: 11, y: 11),
+                Layer(pixels: paws, x: 7, y: 0),
+            ]
+        case .sleeping, .lying, .standing, .happy:
+            let standing = pose == .standing || pose == .happy
+            let y = standing ? 0 : 2
+            var layers: [Layer] = []
+            if tailUp && pose != .sleeping { layers.append(Layer(pixels: Pochi.tail, y: y)) }
+            layers.append(Layer(grid: standing ? Pochi.standing : Pochi.lying, y: y))
+            if excited { layers.append(Layer(pixels: Pochi.tongue, y: y)) }
+            if eyesClosed { layers.append(Layer(pixels: Pochi.blink, y: y)) }
+            return layers
         }
     }
 
     var body: some View {
         let p = Self.pixel
-        let layers = layers
-        let eyesClosed = pose == .sleeping || blink
+        // Every pose but the phone is drawn centred in the wider canvas.
+        let layers = pose == .phone ? layers : layers.map { Layer(grid: $0.grid, pixels: $0.pixels, x: $0.x + 3, y: $0.y) }
+        let hop = excited && pose != .box && (tick / 3) % 2 == 0
 
         Canvas { ctx, _ in
+            func fill(_ x: Int, _ y: Int, _ c: Character) {
+                guard let color = Pochi.palette[c] else { return }
+                // A hair over 1 px so neighbours never leave a seam.
+                ctx.fill(Path(CGRect(x: CGFloat(x) * p, y: CGFloat(y) * p, width: p + 0.1, height: p + 0.1)),
+                         with: .color(color))
+            }
+            if pose == .phone {
+                // Blue glow of the screen on Pochi's face.
+                let center = CGPoint(x: 12 * p, y: 9 * p)
+                ctx.fill(Path(ellipseIn: CGRect(x: center.x - 6 * p, y: center.y - 6 * p, width: 12 * p, height: 12 * p)),
+                         with: .radialGradient(Gradient(colors: [Color(hex: 0x7CC4FF).opacity(0.4), .clear]),
+                                               center: center, startRadius: 0, endRadius: 6 * p))
+            }
             for layer in layers {
-                for (r, line) in layer.sprite.enumerated() {
-                    for (c, ch) in line.enumerated() {
-                        let rect = CGRect(x: CGFloat(layer.x + c) * p, y: CGFloat(layer.y + r) * p, width: p, height: p)
-                        if ch == "E" && eyesClosed {
-                            ctx.fill(Path(rect), with: .color(Self.color("O")!))
-                            ctx.fill(Path(CGRect(x: rect.minX, y: rect.midY, width: p, height: p * 0.4)),
-                                     with: .color(Self.color("K")!))
-                        } else if let color = Self.color(ch) {
-                            ctx.fill(Path(rect), with: .color(color))
-                        }
-                    }
+                for (r, line) in layer.grid.enumerated() {
+                    for (c, ch) in line.enumerated() { fill(layer.x + c, layer.y + r, ch) }
                 }
+                for px in layer.pixels { fill(layer.x + px.x, layer.y + px.y, px.c) }
             }
         }
-        .frame(width: CGFloat(Self.size.width) * p, height: CGFloat(Self.size.height) * p)
-        .scaleEffect(x: 1, y: breathe ? 1.04 : 1, anchor: .bottom)
-        .offset(y: (bounce ? -7 : 0) + (hop ? -12 : 0))
-        .overlay(alignment: .topTrailing) {
+        .frame(width: CGFloat(Self.width) * p, height: 16 * p)
+        .offset(y: hop ? -p : 0)
+        .overlay(alignment: .topLeading) {
             switch pose {
-            case .sleeping: Zzz().offset(x: 2, y: 4)
-            case .happy: Hearts().offset(x: -14, y: 0)
+            case .sleeping: Zzz().offset(x: 17 * p, y: -2 * p)
+            case .happy: Hearts().offset(x: 9 * p, y: -p)
             default: EmptyView()
             }
         }
         .contentShape(.rect)
         .onTapGesture {
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.4)) { hop = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { hop = false }
-            }
+            excitedUntil = .now.addingTimeInterval(1.5)
             onTap()
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hop) { _, new in new }
-        .onAppear {
-            switch pose {
-            case .sleeping, .lying:
-                withAnimation(.easeInOut(duration: pose == .sleeping ? 2.2 : 1.4).repeatForever()) { breathe = true }
-            case .happy:
-                withAnimation(.easeOut(duration: 0.32).repeatForever()) { bounce = true }
-            case .sitting, .box:
-                break
-            }
-        }
+        .sensoryFeedback(.impact(weight: .light), trigger: excitedUntil)
         .task {
-            // Animation frames: panting, peeking.
             while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(pose == .happy ? 200 : 320))
+                try? await Task.sleep(for: Self.frame)
                 tick += 1
             }
         }
         .task {
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(.random(in: 2.5...5)))
+                try? await Task.sleep(for: .seconds(.random(in: 3...5)))
                 blink = true
                 try? await Task.sleep(for: .milliseconds(140))
                 blink = false
             }
         }
+    }
+}
+
+private extension Color {
+    init(hex: UInt32) {
+        self.init(red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255,
+                  blue: Double(hex & 0xFF) / 255)
     }
 }
 
@@ -283,6 +348,8 @@ enum CorgiMood {
             "Félicitations pour être en vie. C'est déjà ça.",
             "Le canapé t'envoie ses remerciements.",
             "Impressionnant. Une journée entière à ne rien faire.",
+            "Je scrolle. Toi aussi, visiblement.",
+            "Encore une vidéo et je m'y mets. Comme toi, quoi.",
         ]
         case .started: [
             "Progrès. Si on plisse très fort les yeux.",
@@ -307,11 +374,14 @@ enum CorgiMood {
 
     var pose: CorgiPose {
         switch self {
-        case .empty: .box
-        case .nothing: .sleeping
-        case .started: .lying
-        case .halfway: .sitting
-        case .perfect: .happy
+        case .empty: return .box
+        case .nothing:
+            // Doomscrolling by day, asleep at night.
+            let hour = Day.calendar.component(.hour, from: .now)
+            return hour >= 22 || hour < 7 ? .sleeping : .phone
+        case .started: return .lying
+        case .halfway: return .standing
+        case .perfect: return .happy
         }
     }
 
@@ -328,7 +398,7 @@ enum CorgiMood {
 /// Every pose side by side. Launch with `-corgiGallery` to see it.
 struct CorgiGallery: View {
     private let poses: [(CorgiPose, String)] = [
-        (.box, "BOX"), (.sleeping, "SLEEPING"), (.lying, "LYING"), (.sitting, "SITTING"), (.happy, "HAPPY"),
+        (.box, "BOX"), (.sleeping, "SLEEPING"), (.phone, "PHONE"), (.lying, "LYING"), (.standing, "STANDING"), (.happy, "HAPPY"),
     ]
 
     var body: some View {
