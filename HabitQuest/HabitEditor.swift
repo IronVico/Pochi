@@ -103,6 +103,7 @@ struct HabitEditor: View {
             habit.colorName = colorName
         } else {
             context.insert(Habit(name: trimmed, emoji: emoji, colorName: colorName, order: nextOrder))
+            Haptics.added()
         }
         dismiss()
     }

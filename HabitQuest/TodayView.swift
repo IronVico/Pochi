@@ -70,27 +70,18 @@ struct TodayView: View {
                 } else {
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         ForEach(habits) { habit in
-                            HabitCard(habit: habit) {
-                                withAnimation(.spring(duration: 0.35)) { habit.toggle() }
-                            }
-                            .contextMenu {
-                                Button("Modifier", systemImage: "pencil") { editing = habit }
-                                Button("Supprimer", systemImage: "trash", role: .destructive) {
-                                    withAnimation { context.delete(habit) }
+                            HabitCard(habit: habit) { toggle(habit) }
+                                .contextMenu {
+                                    Button("Modifier", systemImage: "pencil") { editing = habit }
+                                    Button("Supprimer", systemImage: "trash", role: .destructive) {
+                                        withAnimation { context.delete(habit) }
+                                    }
                                 }
-                            }
                         }
                         AddHabitCard { showAdd = true }
                     }
                 }
-
-                if stats.isPerfectToday {
-                    PerfectDayBanner()
-                        .padding(.top, 12)
-                        .transition(.scale.combined(with: .opacity))
-                }
             }
-            .animation(.spring, value: stats.isPerfectToday)
             .padding(.horizontal, 20)
             .padding(.bottom, 30)
         }
@@ -101,6 +92,18 @@ struct TodayView: View {
         }
         .sheet(item: $editing) { habit in
             HabitEditor(habit: habit, nextOrder: habit.order)
+        }
+    }
+
+    private func toggle(_ habit: Habit) {
+        withAnimation(.spring(duration: 0.35)) { habit.toggle() }
+        let doneToday = habits.filter { $0.isDone() }.count
+        if !habit.isDone() {
+            Haptics.uncheck()
+        } else if doneToday == habits.count {
+            Haptics.perfectDay()
+        } else {
+            Haptics.check(combo: doneToday)
         }
     }
 
@@ -120,6 +123,7 @@ struct TodayView: View {
                     withAnimation {
                         context.insert(Habit(name: item.0, emoji: item.1, colorName: item.2, order: index))
                     }
+                    Haptics.added()
                 } label: {
                     HStack {
                         Text(item.1)
@@ -133,22 +137,6 @@ struct TodayView: View {
                 .buttonStyle(.plain)
             }
         }
-    }
-}
-
-struct PerfectDayBanner: View {
-    var body: some View {
-        HStack(spacing: 12) {
-            Text("✨").font(.title)
-            VStack(alignment: .leading) {
-                Text("Journée parfaite !").font(.headline)
-                Text("+\(Game.perfectDayXP) XP bonus").font(.subheadline).opacity(0.9)
-            }
-            Spacer()
-        }
-        .foregroundStyle(.white)
-        .padding(16)
-        .background(Theme.heat, in: .rect(cornerRadius: 18))
     }
 }
 
@@ -228,8 +216,7 @@ struct HabitCard: View {
             }
             .contentShape(.rect(cornerRadius: 22))
         }
-        .buttonStyle(PressableStyle())
-        .sensoryFeedback(.success, trigger: done) { _, new in new }
+        .buttonStyle(PressableStyle(lip: done ? habit.color.opacity(0.55) : Color(white: 0.2)))
         .overlay(alignment: .topTrailing) {
             if let floatingXP {
                 Text("+\(floatingXP) XP")
@@ -272,12 +259,25 @@ struct AddHabitCard: View {
     }
 }
 
-/// Slight shrink while pressed.
+/// Duolingo-style 3D button: a coloured lip under the card, which sinks onto it while pressed,
+/// with a small tick under the finger.
 struct PressableStyle: ButtonStyle {
+    var lip: Color = .clear
+    var depth: CGFloat = 4
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.spring(duration: 0.2), value: configuration.isPressed)
+            .offset(y: configuration.isPressed ? depth : 0)
+            .background {
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(lip)
+                    .offset(y: depth)
+            }
+            .padding(.bottom, depth)
+            .animation(.spring(response: 0.15, dampingFraction: 0.7), value: configuration.isPressed)
+            .onChange(of: configuration.isPressed) { _, pressed in
+                if pressed { Haptics.press() }
+            }
     }
 }
 

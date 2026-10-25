@@ -231,9 +231,9 @@ struct PixelCorgi: View {
         .contentShape(.rect)
         .onTapGesture {
             excitedUntil = .now.addingTimeInterval(1.5)
+            Haptics.pet()
             onTap()
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: excitedUntil)
         .task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: Self.frame)

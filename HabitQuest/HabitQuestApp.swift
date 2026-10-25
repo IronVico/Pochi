@@ -56,6 +56,7 @@ struct RootView: View {
         .onChange(of: stats.level) { old, new in
             guard new > old else { return }
             withAnimation(.spring) { levelUp = new }
+            Haptics.levelUp()
             confetti += 1
         }
         #if DEBUG

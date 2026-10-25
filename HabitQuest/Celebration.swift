@@ -93,7 +93,6 @@ struct LevelUpView: View {
             .padding(28)
             .frame(maxWidth: 320)
             .background(.regularMaterial, in: .rect(cornerRadius: 30))
-            .sensoryFeedback(.success, trigger: pop)
         }
         .onAppear {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.5).delay(0.1)) { pop = true }
