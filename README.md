@@ -4,7 +4,7 @@ Un petit habit tracker iOS gamifié, fait pour un usage perso.
 
 - **XP et niveaux** : 10 XP par validation, +2 XP par jour de série (jusqu'à +20), +25 XP pour une journée parfaite.
 - **Séries** 🔥, **12 badges** à débloquer, confettis et écran de passage de niveau.
-- **Un corgi en pixel art** qui commente ta journée, avec beaucoup de sarcasme, et un tampon « verdict ».
+- **Un corgi en pixel art** qui commente ta journée avec beaucoup de sarcasme, et change de pose (carton, dodo, couché, assis, content) selon ton avancement.
 - **Calendrier** des 5 dernières semaines par habitude, pour corriger un oubli.
 
 SwiftUI + SwiftData, iOS 18+. Les données restent sur l'appareil.
