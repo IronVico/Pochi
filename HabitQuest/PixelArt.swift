@@ -81,64 +81,34 @@ enum PixelIcon {
         "...OOOOOO...",
     ]
 
-    static let bolt = [
-        "......YYYY..",
-        ".....YYYY...",
-        "....YYYY....",
-        "...YYYY.....",
-        "..YYYYYYYY..",
-        ".YYYYYYYY...",
-        ".....YYYY...",
-        "....YYYY....",
-        "...YYY......",
-        "..YYY.......",
-        "..YY........",
-        ".Y..........",
+    static let house = [
+        ".....##.....",
+        "....####....",
+        "...######...",
+        "..########..",
+        ".##########.",
+        "############",
+        "..########..",
+        "..########..",
+        "..###..###..",
+        "..###..###..",
+        "..###..###..",
+        "..###..###..",
     ]
 
-    static let star = [
-        ".....YY.....",
-        ".....YY.....",
-        "....YYYY....",
-        "YYYYYYYYYYYY",
-        ".YYYYYYYYYY.",
-        "..YYYYYYYY..",
-        "...YYYYYY...",
-        "..YYYYYYYY..",
-        "..YYY..YYY..",
-        ".YYY....YYY.",
-        ".YY......YY.",
-        "............",
-    ]
-
-    static let sparkle = [
-        "....P.......",
-        "....P.......",
-        "...PPP......",
-        ".PPPPPPP....",
-        "...PPP......",
-        "....P.......",
-        "....P....P..",
-        ".........P..",
-        "........PPP.",
-        "......PPPPPP",
-        "........PPP.",
-        ".........P..",
-    ]
-
-    static let trophy = [
-        ".YYYYYYYYYY.",
-        "YY.YYYYYY.YY",
-        "Y..YYYYYY..Y",
-        "Y..YYYYYY..Y",
-        ".Y.YYYYYY.Y.",
-        "..YYYYYYYY..",
-        "....YYYY....",
-        ".....YY.....",
-        ".....YY.....",
-        "....YYYY....",
-        "...YYYYYY...",
-        "...YYYYYY...",
+    static let tree = [
+        "....NNNN....",
+        "..NNNNNNNN..",
+        ".NNNNNNNNNN.",
+        ".NNNNNNNNNN.",
+        "NNNNNNNNNNNN",
+        "NNNNNNNNNNNN",
+        ".NNNNNNNNNN.",
+        "..NNNNNNNN..",
+        ".....MM.....",
+        ".....MM.....",
+        ".....MM.....",
+        "....MMMM....",
     ]
 
     static let chart = [

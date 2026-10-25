@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Pixel-art versions of the app's emojis. Habits and badges still store the emoji itself,
+/// Pixel-art versions of the habit emojis. Habits still store the emoji itself,
 /// so nothing changes in the data: we just draw the matching sprite when there is one.
 enum PixelEmoji {
     /// Icons offered when creating a habit.
@@ -236,122 +236,6 @@ enum PixelEmoji {
             "............",
         ],
 
-        // Badges
-        "👣": [
-            "...OO..OO...",
-            "...OO..OO...",
-            "OO........OO",
-            "OO........OO",
-            "....OOOO....",
-            "...OOOOOO...",
-            "..OOOOOOOO..",
-            "..OOOOOOOO..",
-            "..OOOOOOOO..",
-            "...OO..OO...",
-            "............",
-            "............",
-        ],
-        "🔟": [
-            "............",
-            "............",
-            "..YY..YYYY..",
-            ".YYY..Y..Y..",
-            "..YY..Y..Y..",
-            "..YY..Y..Y..",
-            "..YY..Y..Y..",
-            "..YY..Y..Y..",
-            ".YYYY.YYYY..",
-            "............",
-            "............",
-            "............",
-        ],
-        "🔥": PixelIcon.flame,
-        "✨": PixelIcon.sparkle,
-        "⭐️": PixelIcon.star,
-        "📅": [
-            "..L....L....",
-            ".RRRRRRRRRR.",
-            ".RRRRRRRRRR.",
-            ".WWWWWWWWWW.",
-            ".WWKKKKKWWW.",
-            ".WWWWWWKWWW.",
-            ".WWWWWKWWWW.",
-            ".WWWWWKWWWW.",
-            ".WWWWKWWWWW.",
-            ".WWWWKWWWWW.",
-            ".WWWWWWWWWW.",
-            "............",
-        ],
-        "🧺": [
-            "............",
-            "...MMMMMM...",
-            "..M......M..",
-            ".M........M.",
-            "MMMMMMMMMMMM",
-            ".mMmMmMmMmM.",
-            ".MmMmMmMmMm.",
-            ".mMmMmMmMmM.",
-            "..MmMmMmMm..",
-            "..mMmMmMmM..",
-            "...MMMMMM...",
-            "............",
-        ],
-        "🚀": [
-            "..........RR",
-            ".........RRR",
-            "........WWR.",
-            ".......WWWW.",
-            "......WWbWW.",
-            "..R..WWbbW..",
-            "..RRWWWWW...",
-            "...WWWWW....",
-            "..OWWWRR....",
-            ".OOOW.RR....",
-            "OOO.........",
-            "O...........",
-        ],
-        "💎": [
-            "............",
-            "...CCCCCC...",
-            "..CWCCCCbC..",
-            ".CWCCCCCCbC.",
-            "CCCCCCCCCCCC",
-            ".CCCCCCCCCb.",
-            "..CCCCCCCb..",
-            "...CCCCCb...",
-            "....CCCb....",
-            ".....Cb.....",
-            "............",
-            "............",
-        ],
-        "💯": [
-            "............",
-            "............",
-            ".R..RRR.RRR.",
-            "RR..R.R.R.R.",
-            ".R..R.R.R.R.",
-            ".R..R.R.R.R.",
-            ".R..R.R.R.R.",
-            "RRR.RRR.RRR.",
-            "............",
-            "RRRRRRRRRRR.",
-            "............",
-            "............",
-        ],
-        "👑": [
-            "............",
-            "............",
-            "Y....YY....Y",
-            "YY..YYYY..YY",
-            "YYY.YYYY.YYY",
-            "YYYYYYYYYYYY",
-            "YYYYYYYYYYYY",
-            "YRYYYRRYYYRY",
-            "YYYYYYYYYYYY",
-            ".DDDDDDDDDD.",
-            "............",
-            "............",
-        ],
     ]
 }
 
@@ -372,15 +256,11 @@ struct EmojiIcon: View {
 #if DEBUG
 /// Every pixel emoji. Launch with `-iconGallery` to see it.
 struct PixelEmojiGallery: View {
-    private let badges = ["👣", "🔟", "🔥", "📅", "✨", "🧺", "⭐️", "💪", "🚀", "💎", "💯", "👑"]
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 SectionLabel(text: "HABITUDES")
                 grid(PixelEmoji.habitIcons)
-                SectionLabel(text: "BADGES")
-                grid(badges)
             }
             .padding(24)
             .padding(.top, 40)

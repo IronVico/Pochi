@@ -8,6 +8,8 @@ struct HabitQuestApp: App {
             #if DEBUG
             if CommandLine.arguments.contains("-corgiGallery") {
                 CorgiGallery().preferredColorScheme(.dark)
+            } else if CommandLine.arguments.contains("-nicheGallery") {
+                NicheGallery().preferredColorScheme(.dark)
             } else if CommandLine.arguments.contains("-iconGallery") {
                 PixelEmojiGallery().preferredColorScheme(.dark)
             } else {
@@ -42,9 +44,9 @@ struct RootView: View {
                 Label { Text("Progression") } icon: { PixelIcon.templateImage(PixelIcon.chart) }
             }
             Tab {
-                BadgesView()
+                NicheScreen()
             } label: {
-                Label { Text("Badges") } icon: { PixelIcon.templateImage(PixelIcon.trophy) }
+                Label { Text("Niche") } icon: { PixelIcon.templateImage(PixelIcon.house) }
             }
         }
         .tint(Theme.accent)

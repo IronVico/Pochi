@@ -3,7 +3,8 @@
 Un petit habit tracker iOS gamifié, fait pour un usage perso.
 
 - **XP et niveaux** : 10 XP par validation, +2 XP par jour de série (jusqu'à +20), +25 XP pour une journée parfaite.
-- **Séries** 🔥, **12 badges** à débloquer, confettis et écran de passage de niveau.
+- **Séries** 🔥, confettis et écran de passage de niveau.
+- **La niche de Pochi** : un petit monde isométrique en pixel art qui se construit à chaque niveau (fondations, murs, toit…), avec un arbre planté à chaque journée parfaite.
 - **Pochi, un corgi en pixel art** qui commente ta journée avec beaucoup de sarcasme, et change de pose (carton, sur son téléphone, dodo, couché, debout, content) selon ton avancement.
 - **Calendrier** des 5 dernières semaines par habitude, pour corriger un oubli.
 

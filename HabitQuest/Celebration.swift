@@ -84,6 +84,12 @@ struct LevelUpView: View {
                     .foregroundStyle(Theme.heat)
                 Text(Game.title(forLevel: level))
                     .font(.title3.weight(.semibold))
+                if let step = Construction.step(at: level) {
+                    Text("Nouveau pour la niche : \(step.name.lowercased())")
+                        .font(Theme.mono(13))
+                        .foregroundStyle(Theme.accent)
+                        .multilineTextAlignment(.center)
+                }
                 Button("CONTINUER", action: onDismiss)
                     .buttonStyle(PixelButtonStyle())
                     .padding(.top, 10)

@@ -65,25 +65,27 @@ struct GameStats {
     }
 }
 
-struct Badge: Identifiable {
-    let id: String
-    let emoji: String
-    let title: String
-    let detail: String
-    let isUnlocked: (GameStats) -> Bool
+/// What each level adds to Pochi's doghouse (see IsoWorld).
+struct BuildStep: Identifiable {
+    let level: Int
+    let name: String
+    var id: Int { level }
+}
 
-    static let all: [Badge] = [
-        Badge(id: "first", emoji: "👣", title: "Premier pas", detail: "Valider une habitude") { $0.totalChecks >= 1 },
-        Badge(id: "ten", emoji: "🔟", title: "Bon début", detail: "10 validations") { $0.totalChecks >= 10 },
-        Badge(id: "streak3", emoji: "🔥", title: "Sur la lancée", detail: "Série de 3 jours") { $0.bestStreak >= 3 },
-        Badge(id: "streak7", emoji: "📅", title: "Une semaine", detail: "Série de 7 jours") { $0.bestStreak >= 7 },
-        Badge(id: "perfect", emoji: "✨", title: "Journée parfaite", detail: "Tout valider en un jour") { $0.perfectDays >= 1 },
-        Badge(id: "collector", emoji: "🧺", title: "Collectionneur", detail: "Suivre 5 habitudes") { $0.habitCount >= 5 },
-        Badge(id: "level5", emoji: "⭐️", title: "Niveau 5", detail: "Atteindre le niveau 5") { $0.level >= 5 },
-        Badge(id: "fifty", emoji: "💪", title: "Assidu", detail: "50 validations") { $0.totalChecks >= 50 },
-        Badge(id: "streak30", emoji: "🚀", title: "Inarrêtable", detail: "Série de 30 jours") { $0.bestStreak >= 30 },
-        Badge(id: "perfect10", emoji: "💎", title: "Perfectionniste", detail: "10 journées parfaites") { $0.perfectDays >= 10 },
-        Badge(id: "hundred", emoji: "💯", title: "Centurion", detail: "100 validations") { $0.totalChecks >= 100 },
-        Badge(id: "level10", emoji: "👑", title: "Niveau 10", detail: "Atteindre le niveau 10") { $0.level >= 10 },
+enum Construction {
+    static let steps: [BuildStep] = [
+        BuildStep(level: 1, name: "Le terrain"),
+        BuildStep(level: 2, name: "Les fondations"),
+        BuildStep(level: 3, name: "Les murs"),
+        BuildStep(level: 4, name: "Le toit"),
+        BuildStep(level: 5, name: "La gamelle"),
+        BuildStep(level: 6, name: "La clôture"),
+        BuildStep(level: 7, name: "Le chemin"),
+        BuildStep(level: 8, name: "Le lampadaire"),
+        BuildStep(level: 9, name: "La boîte aux lettres"),
+        BuildStep(level: 10, name: "Le drapeau"),
     ]
+
+    static func step(at level: Int) -> BuildStep? { steps.first { $0.level == level } }
+    static func next(after level: Int) -> BuildStep? { steps.first { $0.level > level } }
 }
