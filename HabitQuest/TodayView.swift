@@ -25,20 +25,20 @@ struct TodayView: View {
                 HStack(spacing: 10) {
                     Spacer()
                     HStack(spacing: 6) {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(stats.currentStreak > 0 ? Theme.accent : .secondary)
+                        PixelSprite(grid: PixelIcon.flame, pixel: 1.75,
+                                    tint: stats.currentStreak > 0 ? nil : Color(white: 0.4))
                         Text("\(stats.currentStreak)").contentTransition(.numericText())
                     }
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .padding(.horizontal, 16)
                     .frame(height: 46)
-                    .background(Color(white: 0.12), in: .capsule)
+                    .background(PixelFrame().fill(Color(white: 0.12)))
 
                     Button { showAdd = true } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 20, weight: .bold))
                             .frame(width: 46, height: 46)
-                            .background(Color(white: 0.12), in: .circle)
+                            .background(PixelFrame().fill(Color(white: 0.12)))
                     }
                     .foregroundStyle(.white)
                 }
@@ -163,19 +163,9 @@ struct HabitCard: View {
                     Text(habit.emoji)
                         .font(.title2)
                         .frame(width: 46, height: 46)
-                        .background(habit.color.opacity(done ? 0.35 : 0.18), in: .rect(cornerRadius: 14))
+                        .background(PixelFrame(unit: 3).fill(habit.color.opacity(done ? 0.35 : 0.18)))
                     Spacer()
-                    ZStack {
-                        Circle().fill(done ? habit.color : .clear)
-                        Circle().strokeBorder(done ? habit.color : Color(white: 0.3), lineWidth: 2.5)
-                        if done {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundStyle(.white)
-                                .transition(.scale)
-                        }
-                    }
-                    .frame(width: 30, height: 30)
+                    PixelCheckbox(done: done, color: habit.color)
                 }
 
                 Text(habit.name)
@@ -185,42 +175,42 @@ struct HabitCard: View {
                     .padding(.top, 14)
 
                 HStack(spacing: 8) {
-                    Label("\(streak)", systemImage: "flame.fill")
-                        .foregroundStyle(streak > 0 ? .orange : .secondary)
-                        .contentTransition(.numericText())
+                    HStack(spacing: 4) {
+                        PixelSprite(grid: PixelIcon.flame, pixel: 1.1, tint: streak > 0 ? nil : Color(white: 0.4))
+                        Text("\(streak)").contentTransition(.numericText())
+                    }
+                    .foregroundStyle(streak > 0 ? .orange : .secondary)
                     Text(done ? "Validé" : "+\(habit.nextXP) XP")
                         .foregroundStyle(.secondary)
                 }
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .padding(.top, 6)
 
-                WeekDots(habit: habit)
+                WeekSquares(habit: habit)
                     .padding(.top, 12)
             }
-            .padding(14)
+            .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                RoundedRectangle(cornerRadius: 22)
-                    .fill(Color(white: 0.11))
-                    .overlay {
-                        if done {
-                            RoundedRectangle(cornerRadius: 22)
-                                .fill(LinearGradient(colors: [habit.color.opacity(0.28), habit.color.opacity(0.06)],
-                                                     startPoint: .topLeading, endPoint: .bottomTrailing))
-                        }
+                // Stepped border, then the face, tinted once the habit is done.
+                ZStack {
+                    PixelFrame().fill(done ? habit.color : Color(white: 0.2))
+                    PixelFrame().fill(Color(white: 0.11)).padding(3)
+                    if done {
+                        PixelFrame()
+                            .fill(LinearGradient(colors: [habit.color.opacity(0.3), habit.color.opacity(0.08)],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .padding(3)
                     }
+                }
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: 22)
-                    .strokeBorder(done ? habit.color.opacity(0.6) : .clear, lineWidth: 1.5)
-            }
-            .contentShape(.rect(cornerRadius: 22))
+            .contentShape(PixelFrame())
         }
-        .buttonStyle(PressableStyle(lip: done ? habit.color.opacity(0.55) : Color(white: 0.2)))
+        .buttonStyle(PressableStyle(lip: done ? habit.color.opacity(0.5) : Color(white: 0.16)))
         .overlay(alignment: .topTrailing) {
             if let floatingXP {
                 Text("+\(floatingXP) XP")
-                    .font(.system(size: 14, weight: .heavy, design: .rounded))
+                    .font(.system(size: 14, weight: .heavy, design: .monospaced))
                     .foregroundStyle(habit.color)
                     .fixedSize()
                     .offset(x: -8, y: -14)
@@ -231,6 +221,25 @@ struct HabitCard: View {
             }
         }
         .animation(.easeOut(duration: 0.4), value: floatingXP)
+    }
+}
+
+/// Square pixel checkbox; a pixel check mark pops in when done.
+struct PixelCheckbox: View {
+    let done: Bool
+    let color: Color
+
+    var body: some View {
+        ZStack {
+            PixelFrame(unit: 2).fill(done ? color : Color(white: 0.32))
+            if !done {
+                PixelFrame(unit: 2).fill(Color(white: 0.11)).padding(3)
+            } else {
+                PixelSprite(grid: PixelIcon.check, pixel: 1.5, tint: .white)
+                    .transition(.scale)
+            }
+        }
+        .frame(width: 30, height: 30)
     }
 }
 
@@ -249,18 +258,17 @@ struct AddHabitCard: View {
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .frame(minHeight: 150)
-            .overlay {
-                RoundedRectangle(cornerRadius: 22)
-                    .strokeBorder(Color(white: 0.25), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+            .background {
+                PixelFrame().stroke(Color(white: 0.25), style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
             }
-            .contentShape(.rect(cornerRadius: 22))
+            .contentShape(PixelFrame())
         }
         .buttonStyle(PressableStyle())
     }
 }
 
-/// Duolingo-style 3D button: a coloured lip under the card, which sinks onto it while pressed,
-/// with a small tick under the finger.
+/// Duolingo-style 3D button: a coloured pixel lip under the card, which sinks onto it
+/// while pressed, with a small tick under the finger.
 struct PressableStyle: ButtonStyle {
     var lip: Color = .clear
     var depth: CGFloat = 4
@@ -269,7 +277,7 @@ struct PressableStyle: ButtonStyle {
         configuration.label
             .offset(y: configuration.isPressed ? depth : 0)
             .background {
-                RoundedRectangle(cornerRadius: 22)
+                PixelFrame()
                     .fill(lip)
                     .offset(y: depth)
             }
@@ -281,20 +289,21 @@ struct PressableStyle: ButtonStyle {
     }
 }
 
-/// The last 7 days, today on the right.
-struct WeekDots: View {
+/// The last 7 days as little squares, today on the right.
+struct WeekSquares: View {
     let habit: Habit
 
     var body: some View {
         HStack(spacing: 4) {
             ForEach((0..<7).reversed(), id: \.self) { ago in
                 let done = habit.isDone(Day.key(Day.offset(-ago)))
-                Circle()
-                    .fill(done ? habit.color : Color(.tertiarySystemFill))
-                    .frame(width: 8, height: 8)
+                Rectangle()
+                    .fill(done ? habit.color : Color(white: 0.2))
+                    .frame(width: 9, height: 9)
                     .overlay {
-                        if ago == 0 { Circle().strokeBorder(habit.color.opacity(0.6), lineWidth: 1).padding(-2) }
+                        if ago == 0 { Rectangle().stroke(habit.color, lineWidth: 1.5).padding(-3) }
                     }
+                    .padding(.horizontal, ago == 0 ? 2 : 0)
             }
         }
     }

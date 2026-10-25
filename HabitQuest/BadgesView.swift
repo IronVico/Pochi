@@ -8,28 +8,38 @@ struct BadgesView: View {
         let stats = GameStats(habits: habits)
         let unlocked = Badge.all.filter { $0.isUnlocked(stats) }.count
 
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("\(unlocked) / \(Badge.all.count) débloqués").font(.headline)
-                        ProgressView(value: Double(unlocked), total: Double(Badge.all.count))
-                            .tint(Theme.accent)
-                    }
-                    .padding(16)
-                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Badges")
+                    .font(.system(size: 40, weight: .bold))
+                    .padding(.top, 60)
 
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        ForEach(Badge.all) { badge in
-                            BadgeCell(badge: badge, unlocked: badge.isUnlocked(stats))
-                        }
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 10) {
+                        PixelSprite(grid: PixelIcon.trophy, pixel: 2)
+                        Text("\(unlocked) / \(Badge.all.count) DÉBLOQUÉS")
+                            .font(.system(size: 18, weight: .heavy, design: .monospaced))
+                    }
+                    PixelBlocksBar(filled: unlocked, total: Badge.all.count)
+                }
+                .padding(18)
+                .pixelPanel(border: Theme.accent.opacity(0.6))
+                .padding(.top, 24)
+
+                SectionLabel(text: "COLLECTION")
+                    .padding(.top, 36)
+                    .padding(.bottom, 14)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
+                    ForEach(Badge.all) { badge in
+                        BadgeCell(badge: badge, unlocked: badge.isUnlocked(stats))
                     }
                 }
-                .padding()
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Badges")
+            .padding(.horizontal, 20)
+            .padding(.bottom, 30)
         }
+        .scrollIndicators(.hidden)
+        .background(Color.black)
     }
 }
 
@@ -38,27 +48,33 @@ struct BadgeCell: View {
     let unlocked: Bool
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text(unlocked ? badge.emoji : "🔒")
-                .font(.system(size: 36))
-                .frame(width: 64, height: 64)
-                .background(
-                    unlocked ? AnyShapeStyle(Theme.heat.opacity(0.25)) : AnyShapeStyle(Color(.tertiarySystemFill)),
-                    in: .circle
-                )
-            Text(badge.title)
-                .font(.caption.bold())
+        VStack(spacing: 8) {
+            ZStack {
+                if unlocked {
+                    PixelFrame(unit: 4).fill(Theme.heat)
+                    PixelFrame(unit: 4).fill(Color(white: 0.11)).padding(4)
+                    Text(badge.emoji).font(.system(size: 30))
+                } else {
+                    PixelFrame(unit: 4).fill(Color(white: 0.16))
+                    PixelSprite(grid: PixelIcon.lock, pixel: 2.5)
+                }
+            }
+            .frame(width: 62, height: 62)
+
+            Text(badge.title.uppercased())
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
+                .lineLimit(2, reservesSpace: true)
             Text(badge.detail)
-                .font(.caption2)
+                .font(Theme.mono(9))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
+                .lineLimit(2, reservesSpace: true)
         }
-        .frame(maxWidth: .infinity, minHeight: 140, alignment: .top)
-        .padding(10)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
-        .opacity(unlocked ? 1 : 0.6)
+        .frame(maxWidth: .infinity, alignment: .top)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 8)
+        .pixelPanel(border: unlocked ? Theme.accent.opacity(0.6) : Color(white: 0.2))
+        .opacity(unlocked ? 1 : 0.55)
     }
 }

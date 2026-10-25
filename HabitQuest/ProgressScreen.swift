@@ -7,51 +7,98 @@ struct ProgressScreen: View {
     var body: some View {
         let stats = GameStats(habits: habits)
 
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 14) {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        StatTile(value: "\(stats.totalXP)", label: "XP total", symbol: "bolt.fill", color: .purple)
-                        StatTile(value: "\(stats.totalChecks)", label: "Validations", symbol: "checkmark.circle.fill", color: .green)
-                        StatTile(value: "\(stats.bestStreak) j", label: "Meilleure série", symbol: "flame.fill", color: .orange)
-                        StatTile(value: "\(stats.perfectDays)", label: "Journées parfaites", symbol: "sparkles", color: .pink)
-                    }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Progression")
+                    .font(.system(size: 40, weight: .bold))
+                    .padding(.top, 60)
 
-                    if !habits.isEmpty {
-                        Text("Oublié de cocher un jour ? Touche une case pour la corriger.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.top, 6)
-                    }
+                LevelPanel(stats: stats)
+                    .padding(.top, 24)
 
-                    ForEach(habits) { habit in
-                        HabitHeatmap(habit: habit)
+                SectionLabel(text: "STATS")
+                    .padding(.top, 36)
+                    .padding(.bottom, 14)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                    StatTile(icon: PixelIcon.bolt, value: "\(stats.totalXP)", label: "XP TOTAL")
+                    StatTile(icon: PixelIcon.check, value: "\(stats.totalChecks)", label: "VALIDATIONS")
+                    StatTile(icon: PixelIcon.flame, value: "\(stats.bestStreak)", label: "RECORD (J)")
+                    StatTile(icon: PixelIcon.sparkle, value: "\(stats.perfectDays)", label: "JOURNÉES PARFAITES")
+                }
+
+                if !habits.isEmpty {
+                    SectionLabel(text: "CALENDRIER")
+                        .padding(.top, 36)
+                    Text("Oublié de cocher un jour ? Touche une case pour la corriger.")
+                        .font(Theme.mono(12))
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 6)
+                        .padding(.bottom, 14)
+                    VStack(spacing: 12) {
+                        ForEach(habits) { habit in
+                            HabitHeatmap(habit: habit)
+                        }
                     }
                 }
-                .padding()
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Progression")
+            .padding(.horizontal, 20)
+            .padding(.bottom, 30)
         }
+        .scrollIndicators(.hidden)
+        .background(Color.black)
+    }
+}
+
+/// Current level, title and progress to the next one, in blocks.
+struct LevelPanel: View {
+    let stats: GameStats
+
+    private static let blocks = 10
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                PixelSprite(grid: PixelIcon.star, pixel: 2)
+                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 2 }
+                Text("NIVEAU \(stats.level)")
+                    .font(.system(size: 24, weight: .heavy, design: .monospaced))
+                    .contentTransition(.numericText())
+                Spacer()
+                Text(stats.title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            PixelBlocksBar(filled: Int(stats.progress * Double(Self.blocks)), total: Self.blocks)
+            Text("\(stats.xpInLevel) / \(stats.xpNeeded) XP · niveau \(stats.level + 1) dans \(stats.xpNeeded - stats.xpInLevel) XP")
+                .font(Theme.mono(12))
+                .foregroundStyle(.secondary)
+        }
+        .padding(18)
+        .pixelPanel(border: Theme.accent.opacity(0.6))
     }
 }
 
 struct StatTile: View {
+    let icon: [String]
     let value: String
     let label: String
-    let symbol: String
-    let color: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Image(systemName: symbol).foregroundStyle(color).font(.title3)
-            Text(value).font(.title2.bold().monospacedDigit()).contentTransition(.numericText())
-            Text(label).font(.caption).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            PixelSprite(grid: icon, pixel: 2)
+            Text(value)
+                .font(.system(size: 28, weight: .heavy, design: .monospaced))
+                .contentTransition(.numericText())
+            Text(label)
+                .font(Theme.mono(10))
+                .tracking(1)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
+        .padding(16)
+        .pixelPanel()
     }
 }
 
@@ -73,41 +120,43 @@ struct HabitHeatmap: View {
     var body: some View {
         let todayKey = Day.key()
 
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
                 Text(habit.emoji)
                 Text(habit.name).font(.headline)
                 Spacer()
-                Label("\(habit.bestStreak) max", systemImage: "flame.fill")
-                    .font(.caption.bold())
+                PixelSprite(grid: PixelIcon.flame, pixel: 1.1)
+                Text("\(habit.bestStreak) max")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundStyle(.orange)
             }
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: 7), spacing: 5) {
                 ForEach(Self.weekdays.indices, id: \.self) { i in
-                    Text(Self.weekdays[i]).font(.caption2).foregroundStyle(.secondary)
+                    Text(Self.weekdays[i]).font(Theme.mono(11)).foregroundStyle(.secondary)
                 }
                 ForEach(days, id: \.self) { date in
                     let key = Day.key(date)
                     let future = key > todayKey
                     let done = habit.isDone(key)
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(done ? habit.color : Color(.tertiarySystemFill))
+                    Rectangle()
+                        .fill(done ? habit.color : Color(white: 0.17))
                         .aspectRatio(1, contentMode: .fit)
                         .overlay {
                             if key == todayKey {
-                                RoundedRectangle(cornerRadius: 6).strokeBorder(habit.color, lineWidth: 2)
+                                Rectangle().strokeBorder(done ? .white : habit.color, lineWidth: 3)
                             }
                         }
                         .opacity(future ? 0.3 : 1)
                         .onTapGesture {
                             guard !future else { return }
                             withAnimation(.snappy) { habit.toggle(key) }
+                            if habit.isDone(key) { Haptics.check(combo: 1) } else { Haptics.uncheck() }
                         }
                 }
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+        .pixelPanel()
     }
 }

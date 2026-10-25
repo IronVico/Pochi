@@ -137,7 +137,7 @@ struct PixelCorgi: View {
     @State private var blink = false
     @State private var excitedUntil = Date.distantPast
 
-    private static let pixel: CGFloat = 3
+    var pixel: CGFloat = 3
     /// 30 × 16: Pochi is 24 wide, the extra room in front of it is for the phone.
     private static let width = 30
     private static let frame: Duration = .milliseconds(70)
@@ -192,7 +192,7 @@ struct PixelCorgi: View {
     }
 
     var body: some View {
-        let p = Self.pixel
+        let p = pixel
         // Pushed against the right edge, next to the speech bubble.
         let shift = 6
         let layers = layers.map { Layer(grid: $0.grid, pixels: $0.pixels, x: $0.x + shift, y: $0.y) }
@@ -342,44 +342,10 @@ struct SpeechBubble: View {
                 .font(Self.font)
                 .foregroundStyle(.white)
         }
-        .padding(.leading, PixelBubble.tail + 14)
+        .padding(.leading, PixelFrame.tailWidth() + 14)
         .padding(.trailing, 14)
         .padding(.vertical, 12)
-        .background(PixelBubble().fill(Self.fill))
-    }
-}
-
-/// A rectangle with stepped pixel corners and a stepped tail on the left.
-struct PixelBubble: Shape {
-    static let unit: CGFloat = 3
-    static var tail: CGFloat { unit * 3 }
-
-    func path(in rect: CGRect) -> Path {
-        let u = Self.unit
-        let l = rect.minX + Self.tail, r = rect.maxX, t = rect.minY, b = rect.maxY
-        let cy = (rect.minY + rect.maxY) / 2
-        var p = Path()
-        p.move(to: CGPoint(x: l + 2 * u, y: t))
-        p.addLines([
-            // Top-right corner
-            CGPoint(x: r - 2 * u, y: t), CGPoint(x: r - 2 * u, y: t + u), CGPoint(x: r - u, y: t + u),
-            CGPoint(x: r - u, y: t + 2 * u), CGPoint(x: r, y: t + 2 * u),
-            // Bottom-right corner
-            CGPoint(x: r, y: b - 2 * u), CGPoint(x: r - u, y: b - 2 * u), CGPoint(x: r - u, y: b - u),
-            CGPoint(x: r - 2 * u, y: b - u), CGPoint(x: r - 2 * u, y: b),
-            // Bottom-left corner
-            CGPoint(x: l + 2 * u, y: b), CGPoint(x: l + 2 * u, y: b - u), CGPoint(x: l + u, y: b - u),
-            CGPoint(x: l + u, y: b - 2 * u), CGPoint(x: l, y: b - 2 * u),
-            // Tail, stepping out towards Pochi
-            CGPoint(x: l, y: cy + 2 * u), CGPoint(x: l - 3 * u, y: cy + 2 * u), CGPoint(x: l - 3 * u, y: cy + u),
-            CGPoint(x: l - 2 * u, y: cy + u), CGPoint(x: l - 2 * u, y: cy), CGPoint(x: l - u, y: cy),
-            CGPoint(x: l - u, y: cy - u), CGPoint(x: l, y: cy - u),
-            // Top-left corner
-            CGPoint(x: l, y: t + 2 * u), CGPoint(x: l + u, y: t + 2 * u), CGPoint(x: l + u, y: t + u),
-            CGPoint(x: l + 2 * u, y: t + u),
-        ])
-        p.closeSubpath()
-        return p
+        .background(PixelFrame(tail: true).fill(Self.fill))
     }
 }
 

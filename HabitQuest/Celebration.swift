@@ -68,34 +68,33 @@ struct LevelUpView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.45).ignoresSafeArea()
+            Color.black.opacity(0.6).ignoresSafeArea()
                 .onTapGesture(perform: onDismiss)
 
             VStack(spacing: 14) {
-                Text("🎉").font(.system(size: 70))
+                PixelCorgi(pose: .happy, pixel: 5)
                     .scaleEffect(pop ? 1 : 0.3)
-                    .rotationEffect(.degrees(pop ? 0 : -30))
-                Text("NIVEAU SUPÉRIEUR").font(.caption.bold()).tracking(2).foregroundStyle(.secondary)
-                Text("Niveau \(level)")
-                    .font(.system(size: 44, weight: .heavy, design: .rounded))
+                    .padding(.top, 10)
+                Text("NIVEAU SUPÉRIEUR")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .tracking(3)
+                    .foregroundStyle(.secondary)
+                Text("NIVEAU \(level)")
+                    .font(.system(size: 40, weight: .heavy, design: .monospaced))
                     .foregroundStyle(Theme.heat)
-                Text(Game.title(forLevel: level)).font(.title3.weight(.semibold))
-                Button(action: onDismiss) {
-                    Text("Continuer")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Theme.heat, in: .capsule)
-                }
-                .padding(.top, 8)
+                Text(Game.title(forLevel: level))
+                    .font(.title3.weight(.semibold))
+                Button("CONTINUER", action: onDismiss)
+                    .buttonStyle(PixelButtonStyle())
+                    .padding(.top, 10)
             }
-            .padding(28)
+            .padding(24)
             .frame(maxWidth: 320)
-            .background(.regularMaterial, in: .rect(cornerRadius: 30))
+            .pixelPanel(fill: Color(white: 0.09), border: Theme.accent, unit: 4)
+            .scaleEffect(pop ? 1 : 0.85)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.5).delay(0.1)) { pop = true }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.55).delay(0.05)) { pop = true }
         }
     }
 }

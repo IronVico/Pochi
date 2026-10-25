@@ -29,14 +29,20 @@ struct RootView: View {
         let stats = GameStats(habits: habits)
 
         TabView {
-            Tab("Aujourd'hui", systemImage: "checkmark.circle.fill") {
+            Tab {
                 TodayView()
+            } label: {
+                Label { Text("Aujourd'hui") } icon: { PixelIcon.templateImage(PixelIcon.check) }
             }
-            Tab("Progression", systemImage: "chart.bar.fill") {
+            Tab {
                 ProgressScreen()
+            } label: {
+                Label { Text("Progression") } icon: { PixelIcon.templateImage(PixelIcon.chart) }
             }
-            Tab("Badges", systemImage: "trophy.fill") {
+            Tab {
                 BadgesView()
+            } label: {
+                Label { Text("Badges") } icon: { PixelIcon.templateImage(PixelIcon.trophy) }
             }
         }
         .tint(Theme.accent)
@@ -60,7 +66,11 @@ struct RootView: View {
             confetti += 1
         }
         #if DEBUG
-        .task { seedDemoIfRequested() }
+        .task {
+            seedDemoIfRequested()
+            // Launch with `-levelUp` to see the level-up screen.
+            if CommandLine.arguments.contains("-levelUp") { levelUp = stats.level }
+        }
         #endif
         .onChange(of: stats.isPerfectToday) { _, perfect in
             if perfect { confetti += 1 }
