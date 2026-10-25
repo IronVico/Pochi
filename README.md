@@ -1,6 +1,6 @@
-# HabitQuest 🐶
+# Pochi 🐶
 
-Un petit habit tracker iOS gamifié, fait pour un usage perso.
+Un petit habit tracker iOS gamifié, fait pour un usage perso. (Le projet Xcode s'appelle encore `HabitQuest`.)
 
 - **XP et niveaux** : 10 XP par validation, +2 XP par jour de série (jusqu'à +20), +25 XP pour une journée parfaite.
 - **Séries** 🔥, confettis et écran de passage de niveau.
