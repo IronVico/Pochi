@@ -53,7 +53,7 @@ struct BadgeCell: View {
                 if unlocked {
                     PixelFrame(unit: 4).fill(Theme.heat)
                     PixelFrame(unit: 4).fill(Color(white: 0.11)).padding(4)
-                    Text(badge.emoji).font(.system(size: 30))
+                    EmojiIcon(emoji: badge.emoji, size: 30)
                 } else {
                     PixelFrame(unit: 4).fill(Color(white: 0.16))
                     PixelSprite(grid: PixelIcon.lock, pixel: 2.5)

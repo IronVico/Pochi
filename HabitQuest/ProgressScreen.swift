@@ -122,7 +122,7 @@ struct HabitHeatmap: View {
 
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                Text(habit.emoji)
+                EmojiIcon(emoji: habit.emoji, size: 20)
                 Text(habit.name).font(.headline)
                 Spacer()
                 PixelSprite(grid: PixelIcon.flame, pixel: 1.1)

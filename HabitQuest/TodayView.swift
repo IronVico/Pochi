@@ -126,7 +126,7 @@ struct TodayView: View {
                     Haptics.added()
                 } label: {
                     HStack {
-                        Text(item.1)
+                        EmojiIcon(emoji: item.1, size: 20)
                         Text(item.0)
                         Spacer()
                         Image(systemName: "plus.circle.fill").foregroundStyle(HabitColor.color(item.2))
@@ -160,8 +160,7 @@ struct HabitCard: View {
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
-                    Text(habit.emoji)
-                        .font(.title2)
+                    EmojiIcon(emoji: habit.emoji, size: 26)
                         .frame(width: 46, height: 46)
                         .background(PixelFrame(unit: 3).fill(habit.color.opacity(done ? 0.35 : 0.18)))
                     Spacer()

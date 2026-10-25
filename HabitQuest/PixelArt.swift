@@ -36,6 +36,19 @@ enum PixelIcon {
         "G": Color(white: 0.48), // dark grey
         "L": Color(white: 0.68), // light grey
         "K": Color(white: 0.10), // black
+        "B": Color(red: 0.31, green: 0.64, blue: 1.00), // blue
+        "b": Color(red: 0.70, green: 0.86, blue: 1.00), // light blue
+        "W": Color(red: 0.96, green: 0.95, blue: 0.93), // white
+        "R": Color(red: 0.90, green: 0.28, blue: 0.30), // red
+        "r": Color(red: 0.62, green: 0.18, blue: 0.22), // dark red
+        "S": Color(red: 0.95, green: 0.77, blue: 0.61), // skin
+        "s": Color(red: 0.82, green: 0.62, blue: 0.46), // skin shadow
+        "M": Color(red: 0.55, green: 0.36, blue: 0.19), // brown
+        "m": Color(red: 0.78, green: 0.57, blue: 0.35), // light brown
+        "V": Color(red: 0.71, green: 0.49, blue: 1.00), // violet
+        "C": Color(red: 0.31, green: 0.85, blue: 0.88), // cyan
+        "D": Color(red: 0.79, green: 0.60, blue: 0.18), // dark gold
+        "n": Color(red: 0.18, green: 0.62, blue: 0.33), // dark green
     ]
 
     static let check = [

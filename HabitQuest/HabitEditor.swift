@@ -12,11 +12,6 @@ struct HabitEditor: View {
     @State private var emoji: String
     @State private var colorName: String
 
-    private static let emojis = [
-        "💧", "🏃", "📚", "🧘", "💪", "🥗", "😴", "✍️",
-        "🎸", "🧹", "💊", "🚭", "🌞", "🧠", "🚶", "📵",
-        "🦷", "🙏", "💰", "🎨", "🌱", "🍎", "🚴", "🎯",
-    ]
 
     init(habit: Habit?, nextOrder: Int) {
         self.habit = habit
@@ -31,22 +26,21 @@ struct HabitEditor: View {
             Form {
                 Section {
                     HStack(spacing: 14) {
-                        Text(emoji)
-                            .font(.largeTitle)
+                        EmojiIcon(emoji: emoji, size: 36)
                             .frame(width: 60, height: 60)
-                            .background(HabitColor.color(colorName).opacity(0.2), in: .rect(cornerRadius: 16))
+                            .background(PixelFrame().fill(HabitColor.color(colorName).opacity(0.2)))
                         TextField("Ex : Boire 2L d'eau", text: $name)
                             .font(.title3)
                     }
                 }
 
                 Section("Icône") {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 10) {
-                        ForEach(Self.emojis, id: \.self) { e in
-                            Text(e)
-                                .font(.title2)
-                                .frame(width: 38, height: 38)
-                                .background(e == emoji ? HabitColor.color(colorName).opacity(0.25) : .clear, in: .circle)
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 10) {
+                        ForEach(PixelEmoji.habitIcons, id: \.self) { e in
+                            EmojiIcon(emoji: e, size: 26)
+                                .frame(width: 44, height: 44)
+                                .background(PixelFrame(unit: 2).fill(e == emoji ? HabitColor.color(colorName).opacity(0.3) : .clear))
+                                .contentShape(.rect)
                                 .onTapGesture { emoji = e }
                         }
                     }

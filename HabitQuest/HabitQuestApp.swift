@@ -8,6 +8,8 @@ struct HabitQuestApp: App {
             #if DEBUG
             if CommandLine.arguments.contains("-corgiGallery") {
                 CorgiGallery().preferredColorScheme(.dark)
+            } else if CommandLine.arguments.contains("-iconGallery") {
+                PixelEmojiGallery().preferredColorScheme(.dark)
             } else {
                 RootView()
             }
