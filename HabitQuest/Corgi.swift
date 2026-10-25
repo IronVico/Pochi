@@ -2,26 +2,26 @@ import SwiftUI
 
 // MARK: - Pixel corgi
 
-/// A loafing corgi drawn from a pixel grid. Breathes, blinks, sleeps when nothing's done, hops when tapped.
-struct PixelCorgi: View {
-    var sleeping: Bool
-    var onTap: () -> Void = {}
+enum CorgiPose {
+    case box, sleeping, lying, sitting, happy
+}
 
-    @State private var blink = false
-    @State private var breathe = false
-    @State private var hop = false
+/// A sprite placed on the corgi's 26×18 pixel canvas.
+private struct Layer {
+    let sprite: [String]
+    let x: Int
+    let y: Int
+}
 
-    private static let pixel: CGFloat = 4
-    private static let eyes: Set<[Int]> = [[5, 16], [5, 22]] // [row, col]
-
-    // K outline · O fur · W cream · P pink
-    private static let art: [String] = [
+/// K outline · O fur · W cream · P pink · E eye · B/D cardboard.
+private enum Sprites {
+    static let loaf = [
         "..............KK.......KK.",
         "..............KOK.....KOK.",
         "..............KPOKKKKKOPK.",
         "..............KPOOOWOOOPK.",
         "...KKKKKKKKKKKKOOOOWOOOOK.",
-        "..KOOOOOOOOOOOKOKOOWOOKOK.",
+        "..KOOOOOOOOOOOKOEOOWOOEOK.",
         ".KOOOOOOOOOOOOKOOOWWWOOOK.",
         ".KOOOOOOOOOOOOOKOWWKWWOK..",
         ".KOOOOOOOOOOOOOKWWWWWWWK..",
@@ -30,40 +30,130 @@ struct PixelCorgi: View {
         "..KKKKKKKKKKKKKKKKKKKKKKK.",
     ]
 
+    static let head = [
+        "KK.......KK",
+        "KOK.....KOK",
+        "KPOKKKKKOPK",
+        "KPOOOWOOOPK",
+        "KOOOOWOOOOK",
+        "KOEOOWOOEOK",
+        "KOOOWWWOOOK",
+        ".KOWWKWWOK.",
+        ".KWWWWWWWK.",
+        "..KWWPWWK..",
+    ]
+
+    static let sittingBody = [
+        "..KOOWWWWWOOK...",
+        ".KOOOWWWWWOOOK..",
+        ".KOOOWWWWWOOOK..",
+        ".KOOOWWWWWOOOOK.",
+        ".KOOKWWKWWKOOOK.",
+        ".KOOKWWKWWKOOOK.",
+        ".KOOKWWKWWKOOOK.",
+        ".KKKKKKKKKKKKKK.",
+    ]
+
+    static let box = [
+        "KKKKKKKKKKKKKKKK",
+        "KBBBBBBDDBBBBBBK",
+        "KBBBBBBDDBBBBBBK",
+        "KBBBBBBDDBBBBBBK",
+        "KBBBBBBBBBBBBBBK",
+        "KBBBBBBBBBBBBBBK",
+        "KDDDDDDDDDDDDDDK",
+        "KKKKKKKKKKKKKKKK",
+    ]
+    static let leftFlap = ["BK.", "KBK", ".KB"]
+    static let rightFlap = [".KB", "KBK", "BK."]
+
+    static let tongue = ["P", "P"]
+    static let blush = ["P"]
+}
+
+/// A pixel-art corgi whose pose and animation follow your day. Tap it to make it hop.
+struct PixelCorgi: View {
+    let pose: CorgiPose
+    var onTap: () -> Void = {}
+
+    @State private var tick = 0
+    @State private var blink = false
+    @State private var breathe = false
+    @State private var bounce = false
+    @State private var hop = false
+
+    private static let pixel: CGFloat = 4
+    private static let size = (width: 26, height: 18)
+
+    private var layers: [Layer] {
+        switch pose {
+        case .sleeping, .lying:
+            return [Layer(sprite: Sprites.loaf, x: 0, y: 6)]
+        case .sitting, .happy:
+            var layers = [
+                Layer(sprite: Sprites.sittingBody, x: 5, y: 10),
+                Layer(sprite: Sprites.head, x: 7, y: 0),
+            ]
+            if tick % 2 == 0 { layers.append(Layer(sprite: Sprites.tongue, x: 12, y: 10)) }
+            if pose == .happy {
+                layers.append(Layer(sprite: Sprites.blush, x: 8, y: 6))
+                layers.append(Layer(sprite: Sprites.blush, x: 16, y: 6))
+            }
+            return layers
+        case .box:
+            // Peeks out, then ducks back in every few seconds.
+            let peek = (tick / 5) % 3 == 2 ? 2 : 0
+            return [
+                Layer(sprite: Sprites.head, x: 7, y: 2 + peek),
+                Layer(sprite: Sprites.box, x: 5, y: 10),
+                Layer(sprite: Sprites.leftFlap, x: 2, y: 7),
+                Layer(sprite: Sprites.rightFlap, x: 21, y: 7),
+            ]
+        }
+    }
+
     private static func color(_ c: Character) -> Color? {
         switch c {
-        case "K": Color(red: 0.16, green: 0.09, blue: 0.05)
+        case "K", "E": Color(red: 0.16, green: 0.09, blue: 0.05)
         case "O": Color(red: 0.89, green: 0.58, blue: 0.29)
         case "W": Color(red: 0.98, green: 0.93, blue: 0.86)
         case "P": Color(red: 0.93, green: 0.55, blue: 0.60)
+        case "B": Color(red: 0.78, green: 0.57, blue: 0.35)
+        case "D": Color(red: 0.55, green: 0.36, blue: 0.19)
         default: nil
         }
     }
 
     var body: some View {
         let p = Self.pixel
-        let rows = Self.art.map(Array.init)
-        let eyesClosed = sleeping || blink
+        let layers = layers
+        let eyesClosed = pose == .sleeping || blink
 
         Canvas { ctx, _ in
-            for (r, line) in rows.enumerated() {
-                for (c, ch) in line.enumerated() {
-                    let rect = CGRect(x: CGFloat(c) * p, y: CGFloat(r) * p, width: p, height: p)
-                    if eyesClosed && Self.eyes.contains([r, c]) {
-                        ctx.fill(Path(rect), with: .color(Self.color("O")!))
-                        ctx.fill(Path(CGRect(x: rect.minX, y: rect.midY, width: p, height: p * 0.4)),
-                                 with: .color(Self.color("K")!))
-                    } else if let color = Self.color(ch) {
-                        ctx.fill(Path(rect), with: .color(color))
+            for layer in layers {
+                for (r, line) in layer.sprite.enumerated() {
+                    for (c, ch) in line.enumerated() {
+                        let rect = CGRect(x: CGFloat(layer.x + c) * p, y: CGFloat(layer.y + r) * p, width: p, height: p)
+                        if ch == "E" && eyesClosed {
+                            ctx.fill(Path(rect), with: .color(Self.color("O")!))
+                            ctx.fill(Path(CGRect(x: rect.minX, y: rect.midY, width: p, height: p * 0.4)),
+                                     with: .color(Self.color("K")!))
+                        } else if let color = Self.color(ch) {
+                            ctx.fill(Path(rect), with: .color(color))
+                        }
                     }
                 }
             }
         }
-        .frame(width: CGFloat(rows[0].count) * p, height: CGFloat(rows.count) * p)
-        .scaleEffect(x: 1, y: breathe ? 1.035 : 1, anchor: .bottom)
-        .offset(y: hop ? -12 : 0)
+        .frame(width: CGFloat(Self.size.width) * p, height: CGFloat(Self.size.height) * p)
+        .scaleEffect(x: 1, y: breathe ? 1.04 : 1, anchor: .bottom)
+        .offset(y: (bounce ? -7 : 0) + (hop ? -12 : 0))
         .overlay(alignment: .topTrailing) {
-            if sleeping { Zzz().offset(x: 6, y: -18) }
+            switch pose {
+            case .sleeping: Zzz().offset(x: 2, y: 4)
+            case .happy: Hearts().offset(x: -14, y: 0)
+            default: EmptyView()
+            }
         }
         .contentShape(.rect)
         .onTapGesture {
@@ -75,7 +165,21 @@ struct PixelCorgi: View {
         }
         .sensoryFeedback(.impact(weight: .light), trigger: hop) { _, new in new }
         .onAppear {
-            withAnimation(.easeInOut(duration: sleeping ? 2.2 : 1.4).repeatForever()) { breathe = true }
+            switch pose {
+            case .sleeping, .lying:
+                withAnimation(.easeInOut(duration: pose == .sleeping ? 2.2 : 1.4).repeatForever()) { breathe = true }
+            case .happy:
+                withAnimation(.easeOut(duration: 0.32).repeatForever()) { bounce = true }
+            case .sitting, .box:
+                break
+            }
+        }
+        .task {
+            // Animation frames: panting, peeking.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(pose == .happy ? 200 : 320))
+                tick += 1
+            }
         }
         .task {
             while !Task.isCancelled {
@@ -101,6 +205,25 @@ private struct Zzz: View {
             }
             .foregroundStyle(.secondary)
         } animation: { _ in .easeInOut(duration: 0.6) }
+    }
+}
+
+/// Little hearts drifting up.
+private struct Hearts: View {
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            ZStack {
+                ForEach(0..<3) { i in
+                    let progress = (t / 1.8 + Double(i) / 3).truncatingRemainder(dividingBy: 1)
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 8 + CGFloat(i) * 2))
+                        .foregroundStyle(Color(red: 0.93, green: 0.45, blue: 0.55))
+                        .offset(x: CGFloat(i - 1) * 12 + sin(progress * .pi * 2) * 3, y: -progress * 34)
+                        .opacity(1 - progress)
+                }
+            }
+        }
     }
 }
 
@@ -182,6 +305,16 @@ enum CorgiMood {
         }
     }
 
+    var pose: CorgiPose {
+        switch self {
+        case .empty: .box
+        case .nothing: .sleeping
+        case .started: .lying
+        case .halfway: .sitting
+        case .perfect: .happy
+        }
+    }
+
     func line(nudge: Int) -> String {
         lines[(Self.dayIndex + nudge) % lines.count]
     }
@@ -189,31 +322,29 @@ enum CorgiMood {
     private static var dayIndex: Int {
         Day.calendar.ordinality(of: .day, in: .year, for: .now) ?? 0
     }
-
-    var verdict: (text: String, color: Color) {
-        let pick = { (words: [String]) in words[Self.dayIndex % words.count] }
-        return switch self {
-        case .empty: (pick(["FANTÔME", "INEXISTANT"]), .gray)
-        case .nothing: (pick(["TRAGIQUE", "LARVE", "CANAPÉ"]), Theme.accent)
-        case .started: (pick(["LIMACE", "TORTUE", "MOU"]), Theme.accent)
-        case .halfway: (pick(["BOF", "PASSABLE", "MOUAIS"]), .orange)
-        case .perfect: (pick(["SUSPECT", "MIRACLE", "TOLÉRABLE"]), .green)
-        }
-    }
 }
 
-struct VerdictStamp: View {
-    let text: String
-    let color: Color
+#if DEBUG
+/// Every pose side by side. Launch with `-corgiGallery` to see it.
+struct CorgiGallery: View {
+    private let poses: [(CorgiPose, String)] = [
+        (.box, "BOX"), (.sleeping, "SLEEPING"), (.lying, "LYING"), (.sitting, "SITTING"), (.happy, "HAPPY"),
+    ]
 
     var body: some View {
-        Text(text)
-            .font(.system(size: 26, weight: .black, design: .rounded))
-            .tracking(2)
-            .foregroundStyle(color)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 6)
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(color, lineWidth: 4))
-            .rotationEffect(.degrees(-6))
+        ScrollView {
+            VStack(alignment: .leading, spacing: 34) {
+                ForEach(poses, id: \.1) { pose, name in
+                    HStack(spacing: 20) {
+                        PixelCorgi(pose: pose)
+                        Text(name).font(Theme.mono(16)).tracking(2).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(30)
+            .padding(.top, 40)
+        }
+        .background(Color.black)
     }
 }
+#endif

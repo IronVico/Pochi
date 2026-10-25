@@ -18,7 +18,6 @@ struct TodayView: View {
     var body: some View {
         let stats = GameStats(habits: habits)
         let mood = CorgiMood(stats: stats)
-        let verdict = mood.verdict
 
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -50,75 +49,28 @@ struct TodayView: View {
 
                 // Corgi
                 HStack(alignment: .center, spacing: 14) {
-                    PixelCorgi(sleeping: mood == .nothing || mood == .empty) { nudge += 1 }
+                    PixelCorgi(pose: mood.pose) { nudge += 1 }
+                        .id(mood.pose)
+                        .transition(.scale(scale: 0.6).combined(with: .opacity))
                     SpeechBubble(text: mood.line(nudge: nudge))
                 }
                 .padding(.top, 26)
-
-                // Big XP number
-                Text("XP")
-                    .font(Theme.mono(18))
-                    .tracking(2)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 40)
-                Text("\(stats.totalXP)")
-                    .font(.system(size: 100, weight: .black, design: .rounded))
-                    .foregroundStyle(Theme.heat)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .contentTransition(.numericText())
-
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color(white: 0.13))
-                        Capsule()
-                            .fill(Theme.heat)
-                            .frame(width: max(18, geo.size.width * stats.progress))
-                    }
-                }
-                .frame(height: 18)
-                .padding(.top, 10)
-
-                Text("Niveau \(stats.level + 1) dans \(stats.xpNeeded - stats.xpInLevel) XP")
-                    .font(.system(size: 15, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.top, 10)
-
-                // Stats
-                VStack(spacing: 24) {
-                    StatLine(symbol: "star.fill", label: "NIVEAU", value: "\(stats.level)", unit: stats.title)
-                    StatLine(symbol: "checkmark", label: "AUJOURD'HUI", value: "\(stats.todayDone)", unit: "/ \(stats.habitCount)")
-                    StatLine(symbol: "flame.fill", label: "RECORD", value: "\(stats.bestStreak)", unit: stats.bestStreak > 1 ? "jours" : "jour")
-                }
-                .padding(.vertical, 36)
-
-                Rectangle().fill(Color(white: 0.15)).frame(height: 1)
-
-                HStack {
-                    Text("VERDICT").font(Theme.mono(18)).tracking(2)
-                    Spacer()
-                    VerdictStamp(text: verdict.text, color: verdict.color)
-                        .id(verdict.text)
-                        .transition(.scale(scale: 1.8).combined(with: .opacity))
-                }
-                .padding(.vertical, 30)
-                .animation(.spring(response: 0.35, dampingFraction: 0.55), value: verdict.text)
+                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: mood.pose)
 
                 // Habits
                 Text("HABITUDES")
                     .font(Theme.mono(24))
                     .tracking(2)
                     .foregroundStyle(.secondary)
-                    .padding(.top, 10)
+                    .padding(.top, 40)
                     .padding(.bottom, 14)
 
-                VStack(spacing: 12) {
-                    if habits.isEmpty {
-                        emptyState
-                    } else {
+                if habits.isEmpty {
+                    emptyState
+                } else {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         ForEach(habits) { habit in
-                            HabitRow(habit: habit) {
+                            HabitCard(habit: habit) {
                                 withAnimation(.spring(duration: 0.35)) { habit.toggle() }
                             }
                             .contextMenu {
@@ -127,17 +79,18 @@ struct TodayView: View {
                                     withAnimation { context.delete(habit) }
                                 }
                             }
-                            .onTapGesture { editing = habit }
                         }
-                    }
-
-                    if stats.isPerfectToday {
-                        PerfectDayBanner()
-                            .transition(.scale.combined(with: .opacity))
+                        AddHabitCard { showAdd = true }
                     }
                 }
-                .animation(.spring, value: stats.isPerfectToday)
+
+                if stats.isPerfectToday {
+                    PerfectDayBanner()
+                        .padding(.top, 12)
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
+            .animation(.spring, value: stats.isPerfectToday)
             .padding(.horizontal, 20)
             .padding(.bottom, 30)
         }
@@ -183,33 +136,6 @@ struct TodayView: View {
     }
 }
 
-struct StatLine: View {
-    let symbol: String
-    let label: String
-    let value: String
-    let unit: String
-
-    var body: some View {
-        HStack {
-            Image(systemName: symbol)
-                .foregroundStyle(Theme.accent)
-                .frame(width: 26)
-            Text(label)
-                .font(Theme.mono(18))
-                .tracking(2)
-            Spacer()
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(value)
-                    .font(.system(size: 38, weight: .heavy, design: .rounded))
-                    .contentTransition(.numericText())
-                Text(unit)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
 struct PerfectDayBanner: View {
     var body: some View {
         HStack(spacing: 12) {
@@ -226,9 +152,9 @@ struct PerfectDayBanner: View {
     }
 }
 
-// MARK: - Habit row
+// MARK: - Habit card
 
-struct HabitRow: View {
+struct HabitCard: View {
     let habit: Habit
     let onToggle: () -> Void
     @State private var floatingXP: Int?
@@ -237,68 +163,121 @@ struct HabitRow: View {
         let done = habit.isDone()
         let streak = habit.currentStreak
 
-        HStack(spacing: 14) {
-            Text(habit.emoji)
-                .font(.title2)
-                .frame(width: 50, height: 50)
-                .background(habit.color.opacity(0.18), in: .rect(cornerRadius: 14))
+        Button {
+            if !done {
+                floatingXP = habit.nextXP
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { floatingXP = nil }
+            }
+            onToggle()
+        } label: {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    Text(habit.emoji)
+                        .font(.title2)
+                        .frame(width: 46, height: 46)
+                        .background(habit.color.opacity(done ? 0.35 : 0.18), in: .rect(cornerRadius: 14))
+                    Spacer()
+                    ZStack {
+                        Circle().fill(done ? habit.color : .clear)
+                        Circle().strokeBorder(done ? habit.color : Color(white: 0.3), lineWidth: 2.5)
+                        if done {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(.white)
+                                .transition(.scale)
+                        }
+                    }
+                    .frame(width: 30, height: 30)
+                }
 
-            VStack(alignment: .leading, spacing: 5) {
-                Text(habit.name).font(.headline)
-                HStack(spacing: 10) {
+                Text(habit.name)
+                    .font(.system(size: 17, weight: .semibold))
+                    .lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.leading)
+                    .padding(.top, 14)
+
+                HStack(spacing: 8) {
                     Label("\(streak)", systemImage: "flame.fill")
                         .foregroundStyle(streak > 0 ? .orange : .secondary)
                         .contentTransition(.numericText())
                     Text(done ? "Validé" : "+\(habit.nextXP) XP")
                         .foregroundStyle(.secondary)
                 }
-                .font(.subheadline)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .padding(.top, 6)
+
                 WeekDots(habit: habit)
+                    .padding(.top, 12)
             }
-
-            Spacer()
-
-            Button {
-                if !done {
-                    floatingXP = habit.nextXP
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { floatingXP = nil }
-                }
-                onToggle()
-            } label: {
-                ZStack {
-                    Circle().fill(done ? habit.color : .clear)
-                    Circle().strokeBorder(habit.color, lineWidth: 3)
-                    if done {
-                        Image(systemName: "checkmark")
-                            .font(.title3.bold())
-                            .foregroundStyle(.white)
-                            .transition(.scale)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(Color(white: 0.11))
+                    .overlay {
+                        if done {
+                            RoundedRectangle(cornerRadius: 22)
+                                .fill(LinearGradient(colors: [habit.color.opacity(0.28), habit.color.opacity(0.06)],
+                                                     startPoint: .topLeading, endPoint: .bottomTrailing))
+                        }
                     }
-                }
-                .frame(width: 46, height: 46)
-                .scaleEffect(done ? 1.0 : 0.92)
-                .contentShape(.circle)
             }
-            .buttonStyle(.plain)
-            .sensoryFeedback(.success, trigger: done) { _, new in new }
-            .overlay(alignment: .top) {
-                if let floatingXP {
-                    Text("+\(floatingXP) XP")
-                        .font(.caption.bold())
-                        .foregroundStyle(habit.color)
-                        .fixedSize()
-                        .offset(y: -30)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .bottom).combined(with: .opacity),
-                            removal: .opacity.combined(with: .offset(y: -20))
-                        ))
-                }
+            .overlay {
+                RoundedRectangle(cornerRadius: 22)
+                    .strokeBorder(done ? habit.color.opacity(0.6) : .clear, lineWidth: 1.5)
             }
-            .animation(.easeOut(duration: 0.4), value: floatingXP)
+            .contentShape(.rect(cornerRadius: 22))
         }
-        .padding(14)
-        .background(Color(white: 0.11), in: .rect(cornerRadius: 20))
-        .contentShape(.rect(cornerRadius: 20))
+        .buttonStyle(PressableStyle())
+        .sensoryFeedback(.success, trigger: done) { _, new in new }
+        .overlay(alignment: .topTrailing) {
+            if let floatingXP {
+                Text("+\(floatingXP) XP")
+                    .font(.system(size: 14, weight: .heavy, design: .rounded))
+                    .foregroundStyle(habit.color)
+                    .fixedSize()
+                    .offset(x: -8, y: -14)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .opacity.combined(with: .offset(y: -20))
+                    ))
+            }
+        }
+        .animation(.easeOut(duration: 0.4), value: floatingXP)
+    }
+}
+
+struct AddHabitCard: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 10) {
+                Image(systemName: "plus")
+                    .font(.system(size: 26, weight: .semibold))
+                Text("AJOUTER")
+                    .font(Theme.mono(13))
+                    .tracking(2)
+            }
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(minHeight: 150)
+            .overlay {
+                RoundedRectangle(cornerRadius: 22)
+                    .strokeBorder(Color(white: 0.25), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+            }
+            .contentShape(.rect(cornerRadius: 22))
+        }
+        .buttonStyle(PressableStyle())
+    }
+}
+
+/// Slight shrink while pressed.
+struct PressableStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .animation(.spring(duration: 0.2), value: configuration.isPressed)
     }
 }
 
