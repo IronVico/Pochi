@@ -12,7 +12,7 @@ struct BlocksBar: View {
             ForEach(0..<total, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 3)
                     .fill(i < filled ? color : Theme.ink.opacity(0.07))
-                    .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.ink, lineWidth: 1.5) }
+                    .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.line, lineWidth: 1.5) }
                     .frame(height: height)
             }
         }
@@ -27,21 +27,21 @@ struct ChunkyButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 17, weight: .bold))
-            .foregroundStyle(Theme.ink)
+            .foregroundStyle(Theme.darkInk)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background {
                 RoundedRectangle(cornerRadius: 16).fill(color)
-                    .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(Theme.ink, lineWidth: Theme.outline) }
+                    .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(Theme.line, lineWidth: Theme.outline) }
             }
-            .modifier(Sinks(pressed: configuration.isPressed, shadow: Theme.ink, radius: 16))
+            .modifier(Sinks(pressed: configuration.isPressed, shadow: Theme.line, radius: 16))
     }
 }
 
 /// The view rests on a hard shadow down-right and sinks onto it while pressed, with a tick.
 struct Sinks: ViewModifier {
     let pressed: Bool
-    var shadow: Color = Theme.ink
+    var shadow: Color = Theme.line
     var radius: CGFloat = 18
 
     func body(content: Content) -> some View {

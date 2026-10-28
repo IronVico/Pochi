@@ -41,7 +41,7 @@ struct HabitEditor: View {
                                 .frame(width: 44, height: 44)
                                 .background(RoundedRectangle(cornerRadius: 10).fill(e == emoji ? HabitColor.color(colorName) : .clear))
                                 .overlay {
-                                    if e == emoji { RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.ink, lineWidth: 2) }
+                                    if e == emoji { RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.line, lineWidth: 2) }
                                 }
                                 .contentShape(.rect)
                                 .onTapGesture { emoji = e }
@@ -56,10 +56,10 @@ struct HabitEditor: View {
                             Circle()
                                 .fill(item.color)
                                 .frame(width: 30, height: 30)
-                                .overlay { Circle().strokeBorder(Theme.ink, lineWidth: item.name == colorName ? 3 : 1.5) }
+                                .overlay { Circle().strokeBorder(Theme.line, lineWidth: item.name == colorName ? 3 : 1.5) }
                                 .overlay {
                                     if item.name == colorName {
-                                        Image(systemName: "checkmark").font(.caption.weight(.heavy)).foregroundStyle(Theme.ink)
+                                        Image(systemName: "checkmark").font(.caption.weight(.heavy)).foregroundStyle(Theme.darkInk)
                                     }
                                 }
                                 .frame(maxWidth: .infinity)

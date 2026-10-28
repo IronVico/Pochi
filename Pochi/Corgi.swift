@@ -141,7 +141,7 @@ private struct CorgiDrawing {
         }
         let tongue = excited || pose == .happy
         if tongue { outlined(ctx, oval(60, 56.5, 3.4, 4), Self.blush, width: 2) }
-        ctx.fill(oval(60, 46.5, 4.2, 3), with: .color(Theme.ink))
+        ctx.fill(oval(60, 46.5, 4.2, 3), with: .color(Theme.darkInk))
         var mouth = Path()
         mouth.move(to: CGPoint(x: 60, y: 49))
         mouth.addLine(to: CGPoint(x: 60, y: 52))
@@ -153,7 +153,7 @@ private struct CorgiDrawing {
             mouth.move(to: CGPoint(x: 60, y: 52))
             mouth.addQuadCurve(to: CGPoint(x: 65, y: 52.5), control: CGPoint(x: 62.5, y: 55.5))
         }
-        ctx.stroke(mouth, with: .color(Theme.ink), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+        ctx.stroke(mouth, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: 2, lineCap: .round))
     }
 
     /// Left ear; it droops outward when Pochi sulks.
@@ -181,7 +181,7 @@ private struct CorgiDrawing {
     /// Left eye.
     private func eye(_ ctx: GraphicsContext) {
         let x = 47.0, y = 40.0
-        let ink = GraphicsContext.Shading.color(Theme.ink)
+        let ink = GraphicsContext.Shading.color(Theme.darkInk)
         let line = StrokeStyle(lineWidth: 2.4, lineCap: .round)
         switch eyes {
         case .open:
@@ -230,7 +230,7 @@ private struct CorgiDrawing {
 
     private func phone(_ ctx: GraphicsContext) {
         let body = Path(roundedRect: CGRect(x: 50, y: 62, width: 20, height: 28), cornerRadius: 4)
-        outlined(ctx, body, Theme.ink)
+        outlined(ctx, body, Theme.darkInk)
         let screenRect = CGRect(x: 52.5, y: 65, width: 15, height: 22)
         ctx.fill(Path(roundedRect: screenRect, cornerRadius: 2), with: .color(Self.screen))
         // Lines scrolling up the screen.
@@ -258,8 +258,8 @@ private struct CorgiDrawing {
         var tape = Path()
         tape.move(to: CGPoint(x: 60, y: 64))
         tape.addLine(to: CGPoint(x: 60, y: 74))
-        ctx.stroke(tape, with: .color(Theme.ink.opacity(0.35)), lineWidth: 2)
-        ctx.draw(Text("FRAGILE").font(.system(size: 7, weight: .heavy)).foregroundStyle(Theme.ink.opacity(0.45)),
+        ctx.stroke(tape, with: .color(Theme.darkInk.opacity(0.35)), lineWidth: 2)
+        ctx.draw(Text("FRAGILE").font(.system(size: 7, weight: .heavy)).foregroundStyle(Theme.darkInk.opacity(0.45)),
                  at: CGPoint(x: 60, y: 86))
     }
 
@@ -271,7 +271,7 @@ private struct CorgiDrawing {
 
     private func outlined(_ ctx: GraphicsContext, _ path: Path, _ fill: Color, width: Double = 2.6) {
         ctx.fill(path, with: .color(fill))
-        ctx.stroke(path, with: .color(Theme.ink), style: StrokeStyle(lineWidth: width, lineJoin: .round))
+        ctx.stroke(path, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: width, lineJoin: .round))
     }
 
     /// Draws `part` as given, then mirrored across the middle of the canvas.
@@ -318,7 +318,7 @@ private struct RainCloud: View {
                     cloud = cloud.union(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)))
                 }
                 ctx.fill(cloud, with: .color(Color(hex: 0xD6DAE2)))
-                ctx.stroke(cloud, with: .color(Theme.ink), style: StrokeStyle(lineWidth: 1.8, lineJoin: .round))
+                ctx.stroke(cloud, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: 1.8, lineJoin: .round))
                 var drops = Path()
                 for (i, x) in [10.0, 18.0, 26.0, 32.0].enumerated() {
                     let y = 21 + ((t * 14) + Double(i) * 4).truncatingRemainder(dividingBy: 11)
@@ -403,9 +403,9 @@ struct SpeechBubble: View {
         .padding(.vertical, 12)
         .background {
             ZStack {
-                BubbleShape().fill(Theme.ink).offset(Theme.lift)
+                BubbleShape().fill(Theme.line).offset(Theme.lift)
                 BubbleShape().fill(Theme.card)
-                BubbleShape().stroke(Theme.ink, lineWidth: Theme.outline)
+                BubbleShape().stroke(Theme.line, lineWidth: Theme.outline)
             }
         }
         .padding(.trailing, Theme.lift.width)

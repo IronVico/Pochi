@@ -120,7 +120,7 @@ struct NicheScene {
             tufts.move(to: CGPoint(x: x, y: y))
             tufts.addLine(to: CGPoint(x: x + 2, y: y - 7))
         }
-        ctx.stroke(tufts, with: .color(Theme.ink.opacity(0.5)), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+        ctx.stroke(tufts, with: .color(Theme.darkInk.opacity(0.5)), style: StrokeStyle(lineWidth: 2, lineCap: .round))
     }
 
     // MARK: Doghouse and yard
@@ -135,20 +135,20 @@ struct NicheScene {
             planks.move(to: CGPoint(x: 140, y: y))
             planks.addLine(to: CGPoint(x: 200, y: y))
         }
-        ctx.stroke(planks, with: .color(Theme.ink.opacity(0.18)), lineWidth: 1.5)
+        ctx.stroke(planks, with: .color(Theme.darkInk.opacity(0.18)), lineWidth: 1.5)
         // Door: an arch.
         var door = Path()
         door.move(to: CGPoint(x: 156, y: 180))
         door.addLine(to: CGPoint(x: 156, y: 160))
         door.addArc(center: CGPoint(x: 170, y: 160), radius: 14, startAngle: .degrees(180), endAngle: .zero, clockwise: false)
         door.addLine(to: CGPoint(x: 184, y: 180))
-        outlined(ctx, door, Theme.ink.opacity(0.85))
+        outlined(ctx, door, Theme.darkInk.opacity(0.85))
         if roofed {
             var roof = Path()
             roof.addLines([CGPoint(x: 128, y: 132), CGPoint(x: 170, y: 96), CGPoint(x: 212, y: 132)])
             roof.closeSubpath()
             outlined(ctx, roof, Theme.coral)
-            ctx.draw(Text("POCHI").font(.system(size: 8, weight: .heavy)).foregroundStyle(Theme.ink),
+            ctx.draw(Text("POCHI").font(.system(size: 8, weight: .heavy)).foregroundStyle(Theme.darkInk),
                      at: CGPoint(x: 170, y: 121))
         }
     }
@@ -194,7 +194,7 @@ struct NicheScene {
                      with: .radialGradient(Gradient(colors: [Theme.yellow.opacity(0.55), .clear]),
                                            center: center, startRadius: 0, endRadius: 40))
         }
-        outlined(ctx, Path(roundedRect: CGRect(x: 259, y: 132, width: 6, height: 70), cornerRadius: 2), Theme.ink)
+        outlined(ctx, Path(roundedRect: CGRect(x: 259, y: 132, width: 6, height: 70), cornerRadius: 2), Theme.darkInk)
         outlined(ctx, Path(roundedRect: CGRect(x: 252, y: 118, width: 20, height: 16), cornerRadius: 4),
                  time == .day ? Theme.card : Theme.yellow)
     }
@@ -204,7 +204,7 @@ struct NicheScene {
         outlined(ctx, Path(roundedRect: CGRect(x: 106, y: 162, width: 26, height: 16), cornerRadius: 7), Theme.periwinkle)
         var raised = Path()
         raised.addLines([CGPoint(x: 130, y: 166), CGPoint(x: 130, y: 152), CGPoint(x: 138, y: 155), CGPoint(x: 130, y: 158)])
-        ctx.stroke(raised, with: .color(Theme.ink), style: StrokeStyle(lineWidth: 2, lineJoin: .round))
+        ctx.stroke(raised, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: 2, lineJoin: .round))
         ctx.fill(Path(CGRect(x: 130, y: 152, width: 7, height: 6)), with: .color(Theme.coral))
     }
 
@@ -212,7 +212,7 @@ struct NicheScene {
         var pole = Path()
         pole.move(to: CGPoint(x: 170, y: 98))
         pole.addLine(to: CGPoint(x: 170, y: 64))
-        ctx.stroke(pole, with: .color(Theme.ink), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
+        ctx.stroke(pole, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
         let wave = sin(t * 4) * 3
         var cloth = Path()
         cloth.move(to: CGPoint(x: 171, y: 65))
@@ -241,7 +241,7 @@ struct NicheScene {
             rays.move(to: CGPoint(x: c.x + cos(a) * (r + 5), y: c.y + sin(a) * (r + 5)))
             rays.addLine(to: CGPoint(x: c.x + cos(a) * (r + 11), y: c.y + sin(a) * (r + 11)))
         }
-        ctx.stroke(rays, with: .color(Theme.ink), style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+        ctx.stroke(rays, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
         outlined(ctx, oval(c.x, c.y, r, r), Theme.yellow)
     }
 
@@ -268,6 +268,6 @@ struct NicheScene {
 
     private func outlined(_ ctx: GraphicsContext, _ path: Path, _ fill: Color, width: Double = 2.6) {
         ctx.fill(path, with: .color(fill))
-        ctx.stroke(path, with: .color(Theme.ink), style: StrokeStyle(lineWidth: width, lineJoin: .round))
+        ctx.stroke(path, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: width, lineJoin: .round))
     }
 }

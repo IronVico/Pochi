@@ -8,6 +8,7 @@ struct TodayView: View {
     @State private var editing: Habit?
     @State private var nudge = 0
     @State private var explainedNeed: CareNeed?
+    @State private var showSettings = false
     @AppStorage(Sound.enabledKey) private var soundOn = true
 
     private static let suggestions: [(String, String, String)] = [
@@ -31,12 +32,23 @@ struct TodayView: View {
                             .font(.system(size: 16, weight: .bold))
                             .frame(width: 46, height: 46)
                             .background(Circle().fill(soundOn ? Theme.yellow : Theme.card))
-                            .overlay { Circle().strokeBorder(Theme.ink, lineWidth: Theme.outline) }
+                            .overlay { Circle().strokeBorder(Theme.line, lineWidth: Theme.outline) }
                             .contentTransition(.symbolEffect(.replace))
                     }
                     .buttonStyle(PressableStyle(radius: 23))
-                    .foregroundStyle(soundOn ? Theme.ink : Theme.ink.opacity(0.4))
+                    .foregroundStyle(soundOn ? Theme.darkInk : Theme.ink.opacity(0.4))
                     .accessibilityLabel(soundOn ? "Couper le son" : "Activer le son")
+
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .frame(width: 46, height: 46)
+                            .background(Circle().fill(Theme.card))
+                            .overlay { Circle().strokeBorder(Theme.line, lineWidth: Theme.outline) }
+                    }
+                    .buttonStyle(PressableStyle(radius: 23))
+                    .foregroundStyle(Theme.ink)
+                    .accessibilityLabel("Réglages")
                     Spacer()
                     HStack(spacing: 6) {
                         Doodle(symbol: "flame", fill: stats.currentStreak > 0 ? Theme.coral : Theme.paper, size: 18)
@@ -53,10 +65,10 @@ struct TodayView: View {
                             .font(.system(size: 20, weight: .heavy))
                             .frame(width: 46, height: 46)
                             .background(RoundedRectangle(cornerRadius: 14).fill(Theme.coral))
-                            .overlay { RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.ink, lineWidth: Theme.outline) }
+                            .overlay { RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.line, lineWidth: Theme.outline) }
                     }
                     .buttonStyle(PressableStyle(radius: 14))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(Theme.darkInk)
                 }
 
                 Text(Self.weekday)
@@ -114,6 +126,7 @@ struct TodayView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground { DottedPaper() }
         }
+        .sheet(isPresented: $showSettings) { SettingsSheet() }
         .sheet(isPresented: $showAdd) {
             HabitEditor(habit: nil, nextOrder: (habits.map(\.order).max() ?? -1) + 1)
         }
@@ -159,13 +172,14 @@ struct TodayView: View {
                         Image(systemName: "plus")
                             .font(.system(size: 13, weight: .heavy))
                             .frame(width: 28, height: 28)
+                            .foregroundStyle(Theme.darkInk)
                             .background(Circle().fill(HabitColor.color(item.2)))
-                            .overlay { Circle().strokeBorder(Theme.ink, lineWidth: 2) }
+                            .overlay { Circle().strokeBorder(Theme.line, lineWidth: 2) }
                     }
                     .foregroundStyle(Theme.ink)
                     .padding(14)
                     .background(RoundedRectangle(cornerRadius: 16).fill(Theme.card))
-                    .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(Theme.ink, lineWidth: Theme.outline) }
+                    .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(Theme.line, lineWidth: Theme.outline) }
                 }
                 .buttonStyle(PressableStyle(radius: 16))
             }
@@ -184,6 +198,8 @@ struct HabitCard: View {
     var body: some View {
         let done = habit.isDone()
         let streak = habit.currentStreak
+        // Once done the card turns pastel, so its text stays dark even in dark mode.
+        let ink = done ? Theme.darkInk : Theme.ink
 
         Button {
             if !done {
@@ -198,14 +214,14 @@ struct HabitCard: View {
                     EmojiIcon(emoji: habit.emoji, size: 26, fill: habit.color)
                         .frame(width: 46, height: 46)
                         .background(RoundedRectangle(cornerRadius: 12).fill(Theme.card))
-                        .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.ink, lineWidth: 2) }
+                        .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.line, lineWidth: 2) }
                     Spacer()
                     CheckCircle(done: done, color: habit.color)
                 }
 
                 Text(habit.name)
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(ink)
                     .lineLimit(2, reservesSpace: true)
                     .multilineTextAlignment(.leading)
                     .padding(.top, 14)
@@ -215,14 +231,14 @@ struct HabitCard: View {
                         Doodle(symbol: "flame", fill: streak > 0 ? Theme.coral : Theme.paper, size: 12)
                         Text("\(streak)").contentTransition(.numericText())
                     }
-                    .foregroundStyle(streak > 0 ? Theme.ink : Theme.ink.opacity(0.45))
+                    .foregroundStyle(streak > 0 ? ink : ink.opacity(0.45))
                     Text(done ? "VALIDÉ" : "+\(habit.nextXP) XP")
-                        .foregroundStyle(Theme.ink.opacity(0.55))
+                        .foregroundStyle(ink.opacity(0.55))
                 }
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .padding(.top, 6)
 
-                WeekSquares(habit: habit)
+                WeekSquares(habit: habit, ink: ink)
                     .padding(.top, 12)
             }
             .padding(16)
@@ -230,7 +246,7 @@ struct HabitCard: View {
             .background {
                 // Paper face that takes the habit's colour once done, then the ink outline.
                 RoundedRectangle(cornerRadius: 18).fill(done ? habit.color : Theme.card)
-                RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.ink, lineWidth: Theme.outline)
+                RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.line, lineWidth: Theme.outline)
             }
             .contentShape(RoundedRectangle(cornerRadius: 18))
         }
@@ -257,11 +273,11 @@ struct HabitCard: View {
             if let floatingXP {
                 Text("+\(floatingXP) XP")
                     .font(.system(size: 13, weight: .heavy, design: .monospaced))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(Theme.darkInk)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(Capsule().fill(Theme.yellow))
-                    .overlay { Capsule().strokeBorder(Theme.ink, lineWidth: 2) }
+                    .overlay { Capsule().strokeBorder(Theme.line, lineWidth: 2) }
                     .rotationEffect(.degrees(-4))
                     .fixedSize()
                     .offset(x: -8, y: -14)
@@ -287,8 +303,8 @@ struct CheckCircle: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(done ? Theme.ink : Theme.card)
-            Circle().strokeBorder(Theme.ink, lineWidth: Theme.outline)
+            Circle().fill(done ? Theme.darkInk : Theme.card)
+            Circle().strokeBorder(Theme.line, lineWidth: Theme.outline)
             if done {
                 Image(systemName: "checkmark")
                     .font(.system(size: 14, weight: .black))
@@ -327,7 +343,7 @@ struct AddHabitCard: View {
 
 /// The card rests on a hard ink shadow and sinks onto it while pressed, with a small tick.
 struct PressableStyle: ButtonStyle {
-    var shadow: Color = Theme.ink
+    var shadow: Color = Theme.line
     var radius: CGFloat = 18
 
     func makeBody(configuration: Configuration) -> some View {
@@ -339,16 +355,17 @@ struct PressableStyle: ButtonStyle {
 /// The last 7 days as little squares, today on the right.
 struct WeekSquares: View {
     let habit: Habit
+    var ink = Theme.ink
 
     var body: some View {
         HStack(spacing: 4) {
             ForEach((0..<7).reversed(), id: \.self) { ago in
                 let done = habit.isDone(Day.key(Day.offset(-ago)))
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(done ? Theme.ink : Theme.ink.opacity(0.12))
+                    .fill(done ? ink : ink.opacity(0.12))
                     .frame(width: 9, height: 9)
                     .overlay {
-                        if ago == 0 { RoundedRectangle(cornerRadius: 3).stroke(Theme.ink, lineWidth: 1.5).padding(-3) }
+                        if ago == 0 { RoundedRectangle(cornerRadius: 3).stroke(ink, lineWidth: 1.5).padding(-3) }
                     }
                     .padding(.horizontal, ago == 0 ? 2 : 0)
             }
@@ -467,7 +484,7 @@ struct CareGauges: View {
             }
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .sketchCard(shadow: low ? Theme.accent : Theme.ink, radius: 14)
+            .sketchCard(shadow: low ? Theme.accent : Theme.line, radius: 14)
             .contentShape(.rect)
         }
     }

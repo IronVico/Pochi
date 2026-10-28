@@ -99,10 +99,10 @@ struct ProgressScreen: View {
                 .font(.system(size: 14, weight: .heavy))
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(Theme.yellow))
-                .overlay { Circle().strokeBorder(Theme.ink, lineWidth: Theme.outline) }
+                .overlay { Circle().strokeBorder(Theme.line, lineWidth: Theme.outline) }
         }
         .buttonStyle(PressableStyle(radius: 18))
-        .foregroundStyle(Theme.ink)
+        .foregroundStyle(Theme.darkInk)
     }
 
     /// The month's days, padded with `nil` so the 1st falls on its weekday (Monday first).
@@ -156,13 +156,13 @@ struct DayCell: View {
             .aspectRatio(1, contentMode: .fit)
             .overlay {
                 RoundedRectangle(cornerRadius: 9)
-                    .strokeBorder(Theme.ink.opacity(status == .none && !isToday ? 0.18 : 1),
+                    .strokeBorder(status == .none && !isToday ? Theme.ink.opacity(0.18) : Theme.line,
                                   lineWidth: isToday ? 3 : 1.5)
             }
             .overlay {
                 Text("\(Day.calendar.component(.day, from: date))")
                     .font(.system(size: 13, weight: .bold, design: .monospaced))
-                    .foregroundStyle(Theme.ink.opacity(status == .none ? 0.5 : 1))
+                    .foregroundStyle(status == .none ? Theme.ink.opacity(0.5) : Theme.darkInk)
                     .fixedSize()
             }
             .opacity(isFuture ? 0.35 : 1)
@@ -177,7 +177,7 @@ struct LegendItem: View {
     var body: some View {
         HStack(spacing: 6) {
             RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 12, height: 12)
-                .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.ink, lineWidth: 1.5) }
+                .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.line, lineWidth: 1.5) }
             Text(label).font(Theme.mono(11)).foregroundStyle(Theme.ink.opacity(0.6))
         }
     }
@@ -215,7 +215,7 @@ struct DayEditor: View {
                                 EmojiIcon(emoji: habit.emoji, size: 22, fill: habit.color)
                                     .frame(width: 38, height: 38)
                                     .background(RoundedRectangle(cornerRadius: 10).fill(Theme.card))
-                                    .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.ink, lineWidth: 2) }
+                                    .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.line, lineWidth: 2) }
                                 Text(habit.name).font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.ink)
                                 Spacer()
                                 CheckCircle(done: done, color: habit.color)

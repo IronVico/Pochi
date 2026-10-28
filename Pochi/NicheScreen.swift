@@ -98,7 +98,7 @@ struct WorldView: View {
         }
         .aspectRatio(size.width / size.height, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 18))
-        .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.ink, lineWidth: Theme.outline) }
+        .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.line, lineWidth: Theme.outline) }
         .background(RoundedRectangle(cornerRadius: 18).fill(Theme.coral).offset(Theme.lift))
         .padding(.trailing, Theme.lift.width)
         .padding(.bottom, Theme.lift.height)
@@ -163,7 +163,7 @@ struct BuildStepRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .sketchCard(fill: built ? Theme.card : Theme.paper, shadow: built ? Theme.mint : Theme.ink.opacity(0.15), radius: 14)
+        .sketchCard(fill: built ? Theme.card : Theme.paper, shadow: built ? Theme.mint : Theme.line.opacity(0.15), radius: 14)
     }
 }
 

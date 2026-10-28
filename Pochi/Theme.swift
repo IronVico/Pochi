@@ -2,11 +2,18 @@ import SwiftUI
 
 /// Sketchbook look: cream dotted paper, chunky ink outlines with hard offset shadows,
 /// pastel accents, heavy titles and handwritten notes.
+/// In dark mode the paper turns charcoal and text turns chalk, but outlines and hard
+/// shadows stay black and cards sit a shade lighter than the paper; the pastels stay.
 enum Theme {
-    static let paper = Color(hex: 0xF8F3E8)
-    static let dot = Color(hex: 0xDDD3BE)
-    static let card = Color(hex: 0xFFFCF5)
-    static let ink = Color(hex: 0x1D1916)
+    static let paper = Color(light: 0xF8F3E8, dark: 0x1C1A17)
+    static let dot = Color(light: 0xDDD3BE, dark: 0x34302B)
+    static let card = Color(light: 0xFFFCF5, dark: 0x312C27)
+    /// Text and small marks.
+    static let ink = Color(light: 0x1D1916, dark: 0xF1E9DA)
+    /// Outlines and hard shadows.
+    static let line = Color(light: 0x1D1916, dark: 0x050404)
+    /// Always dark: for anything sitting on a pastel fill, and inside the illustrations.
+    static let darkInk = Color(hex: 0x1D1916)
 
     static let yellow = Color(hex: 0xF7D35C)
     static let coral = Color(hex: 0xEE7356)
@@ -34,6 +41,13 @@ extension Color {
         self.init(red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255,
                   blue: Double(hex & 0xFF) / 255)
     }
+
+    /// One colour for light mode, another for dark mode.
+    init(light: UInt32, dark: UInt32) {
+        self.init(uiColor: UIColor { traits in
+            UIColor(Color(hex: traits.userInterfaceStyle == .dark ? dark : light))
+        })
+    }
 }
 
 /// Cream paper with a faint dot grid, edge to edge.
@@ -57,7 +71,7 @@ struct DottedPaper: View {
 
 extension View {
     /// A sketchbook card behind the view: ink outline and a hard shadow down-right.
-    func sketchCard(fill: Color = Theme.card, shadow: Color = Theme.ink, radius: CGFloat = 18) -> some View {
+    func sketchCard(fill: Color = Theme.card, shadow: Color = Theme.line, radius: CGFloat = 18) -> some View {
         background {
             ZStack {
                 RoundedRectangle(cornerRadius: radius).fill(shadow)
@@ -65,7 +79,7 @@ extension View {
                 // Opaque base so a translucent fill doesn't let the shadow through.
                 RoundedRectangle(cornerRadius: radius).fill(Theme.card)
                 RoundedRectangle(cornerRadius: radius).fill(fill)
-                RoundedRectangle(cornerRadius: radius).strokeBorder(Theme.ink, lineWidth: Theme.outline)
+                RoundedRectangle(cornerRadius: radius).strokeBorder(Theme.line, lineWidth: Theme.outline)
             }
         }
     }

@@ -7,11 +7,11 @@ struct PochiApp: App {
         WindowGroup {
             #if DEBUG
             if CommandLine.arguments.contains("-corgiGallery") {
-                CorgiGallery().preferredColorScheme(.light)
+                CorgiGallery()
             } else if CommandLine.arguments.contains("-nicheGallery") {
-                NicheGallery().preferredColorScheme(.light)
+                NicheGallery()
             } else if CommandLine.arguments.contains("-iconGallery") {
-                DoodleGallery().preferredColorScheme(.light)
+                DoodleGallery()
             } else {
                 RootView()
             }
@@ -28,6 +28,7 @@ struct RootView: View {
     @Query private var habits: [Habit]
     @State private var confetti = 0
     @State private var levelUp: Int?
+    @AppStorage(Appearance.key) private var appearance = Appearance.system
 
     var body: some View {
         let stats = GameStats(habits: habits)
@@ -50,7 +51,7 @@ struct RootView: View {
             }
         }
         .tint(Theme.accent)
-        .preferredColorScheme(.light)
+        .onChange(of: appearance, initial: true) { _, appearance in appearance.apply() }
         .overlay {
             ConfettiView(trigger: confetti)
                 .allowsHitTesting(false)

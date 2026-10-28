@@ -68,7 +68,7 @@ struct LevelUpView: View {
 
     var body: some View {
         ZStack {
-            Theme.ink.opacity(0.45).ignoresSafeArea()
+            Color.black.opacity(0.45).ignoresSafeArea()
                 .onTapGesture(perform: onDismiss)
 
             VStack(spacing: 14) {
