@@ -7,6 +7,7 @@ struct TodayView: View {
     @State private var showAdd = false
     @State private var editing: Habit?
     @State private var nudge = 0
+    @AppStorage(Sound.enabledKey) private var soundOn = true
 
     private static let suggestions: [(String, String, String)] = [
         ("Boire 2L d'eau", "💧", "blue"),
@@ -23,6 +24,15 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 0) {
                 // Top bar
                 HStack(spacing: 10) {
+                    Button { soundOn.toggle() } label: {
+                        Image(systemName: soundOn ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                            .font(.system(size: 17, weight: .bold))
+                            .frame(width: 46, height: 46)
+                            .background(PixelFrame().fill(Color(white: 0.12)))
+                            .contentTransition(.symbolEffect(.replace))
+                    }
+                    .foregroundStyle(soundOn ? .white : .secondary)
+                    .accessibilityLabel(soundOn ? "Couper le son" : "Activer le son")
                     Spacer()
                     HStack(spacing: 6) {
                         PixelSprite(grid: PixelIcon.flame, pixel: 1.75,

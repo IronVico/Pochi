@@ -1,7 +1,8 @@
 import AVFoundation
 
 /// 8-bit sound effects, synthesised in code (square waves), so there are no audio files.
-/// Plays in the "ambient" category: silent when the iPhone is on mute, mixes with music.
+/// Like Duolingo, plays even when the iPhone is on silent and mixes with music; the speaker
+/// button on the home screen turns it off (`Sound.enabledKey`).
 @MainActor
 enum Sound {
     private struct Note {
@@ -18,6 +19,12 @@ enum Sound {
     private static let players = (0..<4).map { _ in AVAudioPlayerNode() }
     private static var nextPlayer = 0
     private static var isSetUp = false
+
+    /// UserDefaults key of the on/off switch.
+    static let enabledKey = "soundEnabled"
+    private static var isEnabled: Bool {
+        UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true
+    }
 
     /// Habit checked: two rising notes, higher with each habit done today.
     static func check(combo: Int) {
@@ -61,7 +68,7 @@ enum Sound {
     }
 
     private static func play(_ notes: [Note], volume: Float = 0.16) {
-        guard setUp(), let buffer = render(notes, volume: volume) else { return }
+        guard isEnabled, setUp(), let buffer = render(notes, volume: volume) else { return }
         let player = players[nextPlayer]
         nextPlayer = (nextPlayer + 1) % players.count
         player.scheduleBuffer(buffer, at: nil, options: .interrupts)
@@ -70,7 +77,7 @@ enum Sound {
 
     private static func setUp() -> Bool {
         if !isSetUp {
-            try? AVAudioSession.sharedInstance().setCategory(.ambient, options: .mixWithOthers)
+            try? AVAudioSession.sharedInstance().setCategory(.playback, options: .mixWithOthers)
             for player in players {
                 engine.attach(player)
                 engine.connect(player, to: engine.mainMixerNode, format: format)
