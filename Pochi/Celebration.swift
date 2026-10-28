@@ -14,7 +14,7 @@ struct ConfettiView: View {
     }
 
     private static let duration = 3.0
-    private static let colors: [Color] = [.purple, .pink, .orange, .yellow, .green, .blue, .teal]
+    private static let colors: [Color] = [Theme.yellow, Theme.coral, Theme.mint, Theme.periwinkle, Theme.pink]
 
     @State private var start: Date?
     @State private var particles: [Particle] = []
@@ -68,22 +68,22 @@ struct LevelUpView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6).ignoresSafeArea()
+            Theme.ink.opacity(0.45).ignoresSafeArea()
                 .onTapGesture(perform: onDismiss)
 
             VStack(spacing: 14) {
-                PixelCorgi(pose: .happy, pixel: 5)
+                PochiView(pose: .happy, size: 120)
                     .scaleEffect(pop ? 1 : 0.3)
                     .padding(.top, 10)
-                Text("NIVEAU SUPÉRIEUR")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .tracking(3)
-                    .foregroundStyle(.secondary)
-                Text("NIVEAU \(level)")
-                    .font(.system(size: 40, weight: .heavy, design: .monospaced))
+                Text("niveau supérieur !")
+                    .handNote(Theme.pink, size: 20, tilt: -3)
+                Text("Niveau \(level)")
+                    .font(Theme.title(42))
+                    .tracking(-1)
                     .foregroundStyle(Theme.heat)
                 Text(Game.title(forLevel: level))
                     .font(.title3.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
                 if let step = Construction.step(at: level) {
                     Text("Nouveau pour la niche : \(step.name.lowercased())")
                         .font(Theme.mono(13))
@@ -91,12 +91,12 @@ struct LevelUpView: View {
                         .multilineTextAlignment(.center)
                 }
                 Button("CONTINUER", action: onDismiss)
-                    .buttonStyle(PixelButtonStyle())
+                    .buttonStyle(ChunkyButtonStyle())
                     .padding(.top, 10)
             }
             .padding(24)
             .frame(maxWidth: 320)
-            .pixelPanel(fill: Color(white: 0.09), border: Theme.accent, unit: 4)
+            .sketchCard(shadow: Theme.accent, radius: 24)
             .scaleEffect(pop ? 1 : 0.85)
         }
         .onAppear {

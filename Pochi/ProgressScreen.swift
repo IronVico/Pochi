@@ -20,7 +20,9 @@ struct ProgressScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Progression")
-                    .font(.system(size: 40, weight: .bold))
+                    .font(Theme.title(46))
+                    .tracking(-1)
+                    .foregroundStyle(Theme.ink)
                     .padding(.top, 60)
 
                 VStack(spacing: 16) {
@@ -28,8 +30,9 @@ struct ProgressScreen: View {
                         monthButton("chevron.left") { monthOffset -= 1 }
                         Spacer()
                         Text(Self.title(month))
-                            .font(.system(size: 16, weight: .heavy, design: .monospaced))
+                            .font(.system(size: 15, weight: .bold, design: .monospaced))
                             .tracking(2)
+                            .foregroundStyle(Theme.ink)
                         Spacer()
                         monthButton("chevron.right") { monthOffset += 1 }
                             .disabled(monthOffset >= 0)
@@ -38,7 +41,7 @@ struct ProgressScreen: View {
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
                         ForEach(Self.weekdays.indices, id: \.self) { i in
-                            Text(Self.weekdays[i]).font(Theme.mono(11)).foregroundStyle(.secondary)
+                            Text(Self.weekdays[i]).font(Theme.mono(11)).foregroundStyle(Theme.ink.opacity(0.5))
                         }
                         ForEach(days.indices, id: \.self) { i in
                             if let date = days[i] {
@@ -64,7 +67,7 @@ struct ProgressScreen: View {
                     }
                 }
                 .padding(16)
-                .pixelPanel()
+                .sketchCard()
                 .padding(.top, 24)
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -72,9 +75,10 @@ struct ProgressScreen: View {
                     let perfect = statuses.filter { $0 == .perfect }.count
                     Text("\(active) \(active > 1 ? "jours actifs" : "jour actif") · \(perfect) \(perfect > 1 ? "journées parfaites" : "journée parfaite")")
                         .font(.system(size: 13, weight: .bold, design: .monospaced))
-                    Text("Touche un jour pour corriger tes habitudes.")
-                        .font(Theme.mono(12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.ink)
+                    Text("psst, touche un jour pour le corriger")
+                        .handNote(Theme.periwinkle, size: 16, tilt: -2)
+                        .padding(.top, 4)
                 }
                 .padding(.top, 16)
             }
@@ -82,7 +86,7 @@ struct ProgressScreen: View {
             .padding(.bottom, 30)
         }
         .scrollIndicators(.hidden)
-        .background(Color.black)
+        .background(DottedPaper())
         .sheet(item: $editingDay) { day in
             DayEditor(date: day.date)
                 .presentationDetents([.medium, .large])
@@ -92,11 +96,13 @@ struct ProgressScreen: View {
     private func monthButton(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 15, weight: .bold))
+                .font(.system(size: 14, weight: .heavy))
                 .frame(width: 36, height: 36)
-                .background(PixelFrame(unit: 2).fill(Color(white: 0.16)))
+                .background(Circle().fill(Theme.yellow))
+                .overlay { Circle().strokeBorder(Theme.ink, lineWidth: Theme.outline) }
         }
-        .foregroundStyle(.white)
+        .buttonStyle(PressableStyle(radius: 18))
+        .foregroundStyle(Theme.ink)
     }
 
     /// The month's days, padded with `nil` so the 1st falls on its weekday (Monday first).
@@ -131,9 +137,9 @@ enum DayStatus {
 
     var color: Color {
         switch self {
-        case .none: Color(white: 0.15)
-        case .some: Theme.accent
-        case .perfect: Color(red: 0.36, green: 0.82, blue: 0.48)
+        case .none: Theme.card
+        case .some: Theme.yellow
+        case .perfect: Theme.mint
         }
     }
 }
@@ -145,17 +151,19 @@ struct DayCell: View {
     let isFuture: Bool
 
     var body: some View {
-        PixelFrame(unit: 2)
+        RoundedRectangle(cornerRadius: 9)
             .fill(status.color)
             .aspectRatio(1, contentMode: .fit)
             .overlay {
-                Text("\(Day.calendar.component(.day, from: date))")
-                    .font(.system(size: 13, weight: .bold, design: .monospaced))
-                    .foregroundStyle(status == .none ? Color.secondary : Color.black.opacity(0.8))
-                    .fixedSize()
+                RoundedRectangle(cornerRadius: 9)
+                    .strokeBorder(Theme.ink.opacity(status == .none && !isToday ? 0.18 : 1),
+                                  lineWidth: isToday ? 3 : 1.5)
             }
             .overlay {
-                if isToday { PixelFrame(unit: 2).stroke(.white, lineWidth: 2) }
+                Text("\(Day.calendar.component(.day, from: date))")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Theme.ink.opacity(status == .none ? 0.5 : 1))
+                    .fixedSize()
             }
             .opacity(isFuture ? 0.35 : 1)
             .contentShape(.rect)
@@ -168,8 +176,9 @@ struct LegendItem: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Rectangle().fill(color).frame(width: 12, height: 12)
-            Text(label).font(Theme.mono(11)).foregroundStyle(.secondary)
+            RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 12, height: 12)
+                .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.ink, lineWidth: 1.5) }
+            Text(label).font(Theme.mono(11)).foregroundStyle(Theme.ink.opacity(0.6))
         }
     }
 }
@@ -203,22 +212,23 @@ struct DayEditor: View {
                             if habit.isDone(key) { Feedback.check(combo: 1) } else { Feedback.uncheck() }
                         } label: {
                             HStack(spacing: 12) {
-                                EmojiIcon(emoji: habit.emoji, size: 22)
+                                EmojiIcon(emoji: habit.emoji, size: 22, fill: habit.color)
                                     .frame(width: 38, height: 38)
-                                    .background(PixelFrame(unit: 2).fill(habit.color.opacity(0.2)))
-                                Text(habit.name).font(.system(size: 16, weight: .semibold))
+                                    .background(RoundedRectangle(cornerRadius: 10).fill(Theme.card))
+                                    .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.ink, lineWidth: 2) }
+                                Text(habit.name).font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.ink)
                                 Spacer()
-                                PixelCheckbox(done: done, color: habit.color)
+                                CheckCircle(done: done, color: habit.color)
                             }
                             .padding(12)
-                            .pixelPanel(border: done ? habit.color : Color(white: 0.2))
+                            .sketchCard(shadow: done ? habit.color : Theme.ink)
                         }
                         .buttonStyle(.plain)
                     }
                 }
                 .padding(20)
             }
-            .background(Color.black)
+            .background(DottedPaper())
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

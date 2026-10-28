@@ -13,7 +13,9 @@ struct NicheScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text("La niche")
-                    .font(.system(size: 40, weight: .bold))
+                    .font(Theme.title(46))
+                    .tracking(-1)
+                    .foregroundStyle(Theme.ink)
                     .padding(.top, 60)
 
                 WorldView(level: stats.level, trees: stats.perfectDays, pose: mood.pose, fed: care.food >= 35)
@@ -23,24 +25,27 @@ struct NicheScreen: View {
                     .padding(.top, 16)
 
                 HStack(spacing: 12) {
-                    PixelSprite(grid: PixelIcon.tree, pixel: 2)
+                    Doodle(symbol: "tree", fill: Theme.mint, size: 24)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("\(stats.perfectDays) \(stats.perfectDays > 1 ? "ARBRES" : "ARBRE")")
                             .font(.system(size: 16, weight: .heavy, design: .monospaced))
                         Text("Une journée parfaite = un arbre planté.")
                             .font(Theme.mono(12))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.ink.opacity(0.6))
                     }
                     Spacer()
                 }
+                .foregroundStyle(Theme.ink)
                 .padding(16)
-                .pixelPanel()
+                .sketchCard(fill: Theme.mint.opacity(0.5))
                 .padding(.top, 12)
 
-                SectionLabel(text: "PLAN DE CONSTRUCTION")
+                Text("Ce qu'on bâtit")
+                    .font(Theme.title(30))
+                    .foregroundStyle(Theme.ink)
                     .padding(.top, 36)
-                    .padding(.bottom, 14)
-                VStack(spacing: 8) {
+                    .padding(.bottom, 16)
+                VStack(spacing: 10) {
                     ForEach(Construction.steps) { step in
                         BuildStepRow(step: step, built: step.level <= stats.level)
                     }
@@ -50,48 +55,53 @@ struct NicheScreen: View {
             .padding(.bottom, 30)
         }
         .scrollIndicators(.hidden)
-        .background(Color.black)
+        .background(DottedPaper())
     }
 }
 
-/// The isometric world, scaled up pixel-perfect and redrawn ~7 times a second for the
-/// little animations. Tapping it pets Pochi.
+/// The illustrated niche (see NicheScene), with Pochi in the yard. Tapping it pets Pochi.
 struct WorldView: View {
     let level: Int
     let trees: Int
     let pose: CorgiPose
     var fed = true
     /// Time of day; nil follows the clock (re-read on every frame, so it changes on its own).
-    var phase: IsoWorld.Phase?
+    var phase: TimeOfDay?
 
     @State private var pettedUntil = Date.distantPast
 
-    private var pochi: IsoWorld.Pochi {
+    private var pochi: CorgiPose {
         if pettedUntil > .now { return .happy }
-        switch pose {
-        case .box, .standing: return .standing
-        case .sitting: return .sitting
-        case .sleeping: return .sleeping
-        case .phone: return .phone
-        case .happy: return .happy
-        case .sulking: return .sulking
-        }
+        return pose == .box ? .standing : pose
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.14)) { timeline in
-            let frame = Int(timeline.date.timeIntervalSinceReferenceDate / 0.14)
-            if let image = IsoWorld.render(level: level, trees: trees, pochi: pochi, wander: pettedUntil <= .now, fed: fed,
-                                              phase: phase ?? .current, frame: frame) {
-                Image(decorative: image, scale: 1)
-                    .interpolation(.none)
-                    .resizable()
-                    .aspectRatio(CGFloat(IsoWorld.width) / CGFloat(IsoWorld.height), contentMode: .fit)
+        let size = NicheScene.size
+        GeometryReader { geo in
+            let scale = geo.size.width / size.width
+            TimelineView(.animation(minimumInterval: 1 / 20)) { timeline in
+                let t = timeline.date.timeIntervalSinceReferenceDate
+                Canvas { ctx, _ in
+                    ctx.scaleBy(x: scale, y: scale)
+                    NicheScene(level: level, trees: trees, fed: fed, time: phase ?? .current, t: t).draw(in: ctx)
+                }
             }
+            // Pochi trots a little around its spot, unless it is lying down.
+            let pochiHeight = 50 * scale
+            let still = [.sleeping, .sulking, .phone].contains(pochi)
+            PhaseAnimator([-1.0, 1.0]) { side in
+                PochiView(pose: pochi, size: pochiHeight)
+                    .offset(x: still ? 0 : side * 10 * scale)
+            } animation: { _ in .easeInOut(duration: 2.4) }
+            .position(x: NicheScene.pochiSpot.x * scale, y: NicheScene.pochiSpot.y * scale - pochiHeight / 2)
+            .allowsHitTesting(false)
         }
-        .clipShape(PixelFrame(unit: 4))
-        .padding(4)
-        .background(PixelFrame(unit: 4).fill(Theme.accent.opacity(0.6)))
+        .aspectRatio(size.width / size.height, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.ink, lineWidth: Theme.outline) }
+        .background(RoundedRectangle(cornerRadius: 18).fill(Theme.coral).offset(Theme.lift))
+        .padding(.trailing, Theme.lift.width)
+        .padding(.bottom, Theme.lift.height)
         .contentShape(.rect)
         .onTapGesture {
             pettedUntil = .now.addingTimeInterval(1.5)
@@ -109,7 +119,7 @@ struct NextStepPanel: View {
                 Text("PROCHAINE ÉTAPE")
                     .font(Theme.mono(11))
                     .tracking(2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.accent)
                 HStack {
                     Text(next.name.uppercased())
                         .font(.system(size: 18, weight: .heavy, design: .monospaced))
@@ -118,20 +128,21 @@ struct NextStepPanel: View {
                         .font(.system(size: 13, weight: .bold, design: .monospaced))
                         .foregroundStyle(Theme.accent)
                 }
-                PixelBlocksBar(filled: Int(stats.progress * 10), total: 10)
+                BlocksBar(filled: Int(stats.progress * 10), total: 10)
                 Text("Plus que \(stats.xpNeeded - stats.xpInLevel) XP avant le niveau \(stats.level + 1).")
                     .font(Theme.mono(12))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.ink.opacity(0.6))
             } else {
                 Text("NICHE TERMINÉE")
                     .font(.system(size: 18, weight: .heavy, design: .monospaced))
                 Text("Pochi est logé comme un roi. Continue à planter des arbres.")
                     .font(Theme.mono(12))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.ink.opacity(0.6))
             }
         }
+        .foregroundStyle(Theme.ink)
         .padding(18)
-        .pixelPanel(border: Theme.accent.opacity(0.6))
+        .sketchCard()
     }
 }
 
@@ -141,18 +152,18 @@ struct BuildStepRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            PixelSprite(grid: built ? PixelIcon.check : PixelIcon.lock, pixel: 1.5)
+            Doodle(symbol: built ? "checkmark.circle" : "lock", fill: built ? Theme.mint : Theme.paper, size: 17)
             Text(step.name)
                 .font(.system(size: 15, weight: built ? .semibold : .regular))
-                .foregroundStyle(built ? .primary : .secondary)
+                .foregroundStyle(Theme.ink.opacity(built ? 1 : 0.5))
             Spacer()
             Text("NIV. \(step.level)")
                 .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .foregroundStyle(built ? Theme.accent : .secondary)
+                .foregroundStyle(Theme.ink.opacity(built ? 1 : 0.45))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .pixelPanel(border: built ? Theme.accent.opacity(0.4) : Color(white: 0.2))
+        .sketchCard(fill: built ? Theme.card : Theme.paper, shadow: built ? Theme.mint : Theme.ink.opacity(0.15), radius: 14)
     }
 }
 
@@ -162,13 +173,13 @@ struct NicheGallery: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
-                ForEach(Array(IsoWorld.Phase.allCases.enumerated()), id: \.offset) { _, phase in
+                ForEach(TimeOfDay.allCases, id: \.self) { phase in
                     VStack(spacing: 4) {
                         WorldView(level: 10, trees: 12, pose: .standing, phase: phase)
                         Text("\(phase)".uppercased()).font(Theme.mono(11)).foregroundStyle(.secondary)
                     }
                 }
-                ForEach(Array([CorgiPose.phone, .sleeping, .sitting, .happy, .sulking].enumerated()), id: \.offset) { _, pose in
+                ForEach([CorgiPose.phone, .sleeping, .sitting, .happy, .sulking], id: \.self) { pose in
                     VStack(spacing: 4) {
                         WorldView(level: 4, trees: 3, pose: pose, phase: .day)
                         Text("\(pose)".uppercased()).font(Theme.mono(11)).foregroundStyle(.secondary)
@@ -184,7 +195,7 @@ struct NicheGallery: View {
             .padding(16)
             .padding(.top, 40)
         }
-        .background(Color.black)
+        .background(DottedPaper())
     }
 }
 #endif

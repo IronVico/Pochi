@@ -28,40 +28,46 @@ struct TodayView: View {
                 HStack(spacing: 10) {
                     Button { soundOn.toggle() } label: {
                         Image(systemName: soundOn ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                            .font(.system(size: 17, weight: .bold))
+                            .font(.system(size: 16, weight: .bold))
                             .frame(width: 46, height: 46)
-                            .background(PixelFrame().fill(Color(white: 0.12)))
+                            .background(Circle().fill(soundOn ? Theme.yellow : Theme.card))
+                            .overlay { Circle().strokeBorder(Theme.ink, lineWidth: Theme.outline) }
                             .contentTransition(.symbolEffect(.replace))
                     }
-                    .foregroundStyle(soundOn ? .white : .secondary)
+                    .buttonStyle(PressableStyle(radius: 23))
+                    .foregroundStyle(soundOn ? Theme.ink : Theme.ink.opacity(0.4))
                     .accessibilityLabel(soundOn ? "Couper le son" : "Activer le son")
                     Spacer()
                     HStack(spacing: 6) {
-                        PixelSprite(grid: PixelIcon.flame, pixel: 1.75,
-                                    tint: stats.currentStreak > 0 ? nil : Color(white: 0.4))
+                        Doodle(symbol: "flame", fill: stats.currentStreak > 0 ? Theme.coral : Theme.paper, size: 18)
                         Text("\(stats.currentStreak)").contentTransition(.numericText())
                     }
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .font(.system(size: 20, weight: .heavy))
+                    .foregroundStyle(Theme.ink)
                     .padding(.horizontal, 16)
                     .frame(height: 46)
-                    .background(PixelFrame().fill(Color(white: 0.12)))
+                    .sketchCard(radius: 23)
 
                     Button { showAdd = true } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.system(size: 20, weight: .heavy))
                             .frame(width: 46, height: 46)
-                            .background(PixelFrame().fill(Color(white: 0.12)))
+                            .background(RoundedRectangle(cornerRadius: 14).fill(Theme.coral))
+                            .overlay { RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.ink, lineWidth: Theme.outline) }
                     }
-                    .foregroundStyle(.white)
+                    .buttonStyle(PressableStyle(radius: 14))
+                    .foregroundStyle(Theme.ink)
                 }
 
                 Text(Self.weekday)
-                    .font(.system(size: 40, weight: .bold))
-                    .padding(.top, 14)
+                    .font(Theme.title(46))
+                    .tracking(-1)
+                    .foregroundStyle(Theme.ink)
+                    .padding(.top, 18)
 
                 // Corgi
                 HStack(alignment: .center, spacing: 4) {
-                    PixelCorgi(pose: mood.pose) { nudge += 1 }
+                    PochiView(pose: mood.pose) { nudge += 1 }
                         .id(mood.pose)
                         .transition(.scale(scale: 0.6).combined(with: .opacity))
                     SpeechBubble(text: mood.line(nudge: nudge))
@@ -75,17 +81,16 @@ struct TodayView: View {
                 }
 
                 // Habits
-                Text("HABITUDES")
-                    .font(Theme.mono(24))
-                    .tracking(2)
-                    .foregroundStyle(.secondary)
+                Text("Ta journée")
+                    .font(Theme.title(30))
+                    .foregroundStyle(Theme.ink)
                     .padding(.top, 40)
-                    .padding(.bottom, 14)
+                    .padding(.bottom, 16)
 
                 if habits.isEmpty {
                     emptyState
                 } else {
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 12) {
                         ForEach(habits) { habit in
                             HabitCard(habit: habit) { toggle(habit) }
                                 .contextMenu {
@@ -103,11 +108,11 @@ struct TodayView: View {
             .padding(.bottom, 30)
         }
         .scrollIndicators(.hidden)
-        .background(Color.black)
+        .background(DottedPaper())
         .sheet(item: $explainedNeed) { need in
             CareNeedSheet(need: need, value: need.value(in: care))
                 .presentationDragIndicator(.visible)
-                .presentationBackground(Color(white: 0.08))
+                .presentationBackground { DottedPaper() }
         }
         .sheet(isPresented: $showAdd) {
             HabitEditor(habit: nil, nextOrder: (habits.map(\.order).max() ?? -1) + 1)
@@ -136,9 +141,9 @@ struct TodayView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Choisis une suggestion ou appuie sur +")
-                .font(Theme.mono(14))
-                .foregroundStyle(.secondary)
+            Text("choisis une idée, ou appuie sur +")
+                .handNote(Theme.periwinkle, size: 17, tilt: -2)
+                .padding(.bottom, 4)
 
             ForEach(Array(Self.suggestions.enumerated()), id: \.offset) { index, item in
                 Button {
@@ -148,15 +153,21 @@ struct TodayView: View {
                     Feedback.added()
                 } label: {
                     HStack {
-                        EmojiIcon(emoji: item.1, size: 20)
-                        Text(item.0)
+                        EmojiIcon(emoji: item.1, size: 20, fill: HabitColor.color(item.2))
+                        Text(item.0).font(.system(size: 16, weight: .semibold))
                         Spacer()
-                        Image(systemName: "plus.circle.fill").foregroundStyle(HabitColor.color(item.2))
+                        Image(systemName: "plus")
+                            .font(.system(size: 13, weight: .heavy))
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(HabitColor.color(item.2)))
+                            .overlay { Circle().strokeBorder(Theme.ink, lineWidth: 2) }
                     }
+                    .foregroundStyle(Theme.ink)
                     .padding(14)
-                    .background(Color(white: 0.11), in: .rect(cornerRadius: 14))
+                    .background(RoundedRectangle(cornerRadius: 16).fill(Theme.card))
+                    .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(Theme.ink, lineWidth: Theme.outline) }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressableStyle(radius: 16))
             }
         }
     }
@@ -184,29 +195,31 @@ struct HabitCard: View {
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
-                    EmojiIcon(emoji: habit.emoji, size: 26)
+                    EmojiIcon(emoji: habit.emoji, size: 26, fill: habit.color)
                         .frame(width: 46, height: 46)
-                        .background(PixelFrame(unit: 3).fill(habit.color.opacity(done ? 0.35 : 0.18)))
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Theme.card))
+                        .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.ink, lineWidth: 2) }
                     Spacer()
-                    PixelCheckbox(done: done, color: habit.color)
+                    CheckCircle(done: done, color: habit.color)
                 }
 
                 Text(habit.name)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(Theme.ink)
                     .lineLimit(2, reservesSpace: true)
                     .multilineTextAlignment(.leading)
                     .padding(.top, 14)
 
                 HStack(spacing: 8) {
                     HStack(spacing: 4) {
-                        PixelSprite(grid: PixelIcon.flame, pixel: 1.1, tint: streak > 0 ? nil : Color(white: 0.4))
+                        Doodle(symbol: "flame", fill: streak > 0 ? Theme.coral : Theme.paper, size: 12)
                         Text("\(streak)").contentTransition(.numericText())
                     }
-                    .foregroundStyle(streak > 0 ? .orange : .secondary)
-                    Text(done ? "Validé" : "+\(habit.nextXP) XP")
-                        .foregroundStyle(.secondary)
+                    .foregroundStyle(streak > 0 ? Theme.ink : Theme.ink.opacity(0.45))
+                    Text(done ? "VALIDÉ" : "+\(habit.nextXP) XP")
+                        .foregroundStyle(Theme.ink.opacity(0.55))
                 }
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .padding(.top, 6)
 
                 WeekSquares(habit: habit)
@@ -215,21 +228,13 @@ struct HabitCard: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                // Stepped border, then the face, tinted once the habit is done.
-                ZStack {
-                    PixelFrame().fill(done ? habit.color : Color(white: 0.2))
-                    PixelFrame().fill(Color(white: 0.11)).padding(3)
-                    if done {
-                        PixelFrame()
-                            .fill(LinearGradient(colors: [habit.color.opacity(0.3), habit.color.opacity(0.08)],
-                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .padding(3)
-                    }
-                }
+                // Paper face that takes the habit's colour once done, then the ink outline.
+                RoundedRectangle(cornerRadius: 18).fill(done ? habit.color : Theme.card)
+                RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.ink, lineWidth: Theme.outline)
             }
-            .contentShape(PixelFrame())
+            .contentShape(RoundedRectangle(cornerRadius: 18))
         }
-        .buttonStyle(PressableStyle(lip: done ? habit.color.opacity(0.5) : Color(white: 0.16)))
+        .buttonStyle(PressableStyle())
         // Checking a habit: the card pops and wobbles.
         .keyframeAnimator(initialValue: Wobble(), trigger: shake) { card, wobble in
             card
@@ -251,8 +256,13 @@ struct HabitCard: View {
         .overlay(alignment: .topTrailing) {
             if let floatingXP {
                 Text("+\(floatingXP) XP")
-                    .font(.system(size: 14, weight: .heavy, design: .monospaced))
-                    .foregroundStyle(habit.color)
+                    .font(.system(size: 13, weight: .heavy, design: .monospaced))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Theme.yellow))
+                    .overlay { Capsule().strokeBorder(Theme.ink, lineWidth: 2) }
+                    .rotationEffect(.degrees(-4))
                     .fixedSize()
                     .offset(x: -8, y: -14)
                     .transition(.asymmetric(
@@ -270,18 +280,19 @@ private struct Wobble {
     var scale = 1.0
 }
 
-/// Square pixel checkbox; a pixel check mark pops in when done.
-struct PixelCheckbox: View {
+/// Round ink-outlined checkbox; a pixel check mark pops in when done.
+struct CheckCircle: View {
     let done: Bool
     let color: Color
 
     var body: some View {
         ZStack {
-            PixelFrame(unit: 2).fill(done ? color : Color(white: 0.32))
-            if !done {
-                PixelFrame(unit: 2).fill(Color(white: 0.11)).padding(3)
-            } else {
-                PixelSprite(grid: PixelIcon.check, pixel: 1.5, tint: .white)
+            Circle().fill(done ? Theme.ink : Theme.card)
+            Circle().strokeBorder(Theme.ink, lineWidth: Theme.outline)
+            if done {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 14, weight: .black))
+                    .foregroundStyle(color)
                     .transition(.scale(scale: 0.2).animation(.spring(response: 0.3, dampingFraction: 0.45)))
             }
         }
@@ -301,37 +312,27 @@ struct AddHabitCard: View {
                     .font(Theme.mono(13))
                     .tracking(2)
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.ink.opacity(0.45))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .frame(minHeight: 150)
             .background {
-                PixelFrame().stroke(Color(white: 0.25), style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
+                RoundedRectangle(cornerRadius: 18)
+                    .strokeBorder(Theme.ink.opacity(0.35), style: StrokeStyle(lineWidth: 2, dash: [7, 6]))
             }
-            .contentShape(PixelFrame())
+            .contentShape(RoundedRectangle(cornerRadius: 18))
         }
-        .buttonStyle(PressableStyle())
+        .buttonStyle(PressableStyle(shadow: .clear))
     }
 }
 
-/// Duolingo-style 3D button: a coloured pixel lip under the card, which sinks onto it
-/// while pressed, with a small tick under the finger.
+/// The card rests on a hard ink shadow and sinks onto it while pressed, with a small tick.
 struct PressableStyle: ButtonStyle {
-    var lip: Color = .clear
-    var depth: CGFloat = 4
+    var shadow: Color = Theme.ink
+    var radius: CGFloat = 18
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .offset(y: configuration.isPressed ? depth : 0)
-            .background {
-                PixelFrame()
-                    .fill(lip)
-                    .offset(y: depth)
-            }
-            .padding(.bottom, depth)
-            .animation(.spring(response: 0.15, dampingFraction: 0.7), value: configuration.isPressed)
-            .onChange(of: configuration.isPressed) { _, pressed in
-                if pressed { Feedback.press() }
-            }
+            .modifier(Sinks(pressed: configuration.isPressed, shadow: shadow, radius: radius))
     }
 }
 
@@ -343,11 +344,11 @@ struct WeekSquares: View {
         HStack(spacing: 4) {
             ForEach((0..<7).reversed(), id: \.self) { ago in
                 let done = habit.isDone(Day.key(Day.offset(-ago)))
-                Rectangle()
-                    .fill(done ? habit.color : Color(white: 0.2))
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(done ? Theme.ink : Theme.ink.opacity(0.12))
                     .frame(width: 9, height: 9)
                     .overlay {
-                        if ago == 0 { Rectangle().stroke(habit.color, lineWidth: 1.5).padding(-3) }
+                        if ago == 0 { RoundedRectangle(cornerRadius: 3).stroke(Theme.ink, lineWidth: 1.5).padding(-3) }
                     }
                     .padding(.horizontal, ago == 0 ? 2 : 0)
             }
@@ -379,19 +380,19 @@ enum CareNeed: String, Identifiable, CaseIterable {
         }
     }
 
-    var icon: [String] {
+    @ViewBuilder func icon(size: CGFloat) -> some View {
         switch self {
-        case .food: PixelIcon.bone
-        case .happiness: PixelIcon.heart
-        case .energy: PixelIcon.bolt
+        case .food: BoneDoodle(fill: color, size: size)
+        case .happiness: Doodle(symbol: "heart", fill: color, size: size)
+        case .energy: Doodle(symbol: "bolt", fill: color, size: size)
         }
     }
 
     var color: Color {
         switch self {
-        case .food: Theme.accent
-        case .happiness: Color(red: 0.93, green: 0.42, blue: 0.5)
-        case .energy: Color(red: 1, green: 0.82, blue: 0.36)
+        case .food: Theme.coral
+        case .happiness: Theme.pink
+        case .energy: Theme.yellow
         }
     }
 
@@ -456,25 +457,17 @@ struct CareGauges: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
-                    PixelSprite(grid: need.icon, pixel: 2)
+                    need.icon(size: 13)
                     Text(need.label)
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .tracking(1)
-                        .foregroundStyle(low ? Theme.accent : .secondary)
+                        .foregroundStyle(low ? Theme.accent : Theme.ink.opacity(0.6))
                 }
-                HStack(spacing: 2) {
-                    ForEach(0..<Self.blocks, id: \.self) { i in
-                        Rectangle()
-                            .fill(i < filled ? need.color : Color(white: 0.18))
-                            .frame(height: 8)
-                    }
-                }
-                .animation(.snappy, value: filled)
+                BlocksBar(filled: filled, total: Self.blocks, color: need.color, height: 10)
             }
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .pixelPanel()
-            .opacity(low ? 0.85 : 1)
+            .sketchCard(shadow: low ? Theme.accent : Theme.ink, radius: 14)
             .contentShape(.rect)
         }
     }
@@ -500,16 +493,15 @@ struct CareNeedSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 14) {
-                PixelSprite(grid: need.icon, pixel: 5)
+                need.icon(size: 28)
                     .frame(width: 56, height: 56)
-                    .background(PixelFrame().fill(need.color.opacity(0.18)))
+                    .sketchCard(fill: Theme.card, radius: 14)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(need.label)
-                        .font(.system(size: 22, weight: .heavy, design: .monospaced))
-                        .tracking(2)
+                        .font(Theme.title(24))
                     Text(need.summary)
                         .font(.system(size: 16))
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(Theme.ink.opacity(0.75))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -518,16 +510,16 @@ struct CareNeedSheet: View {
                 HStack {
                     Text("Maintenant")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(Theme.ink.opacity(0.6))
                     Spacer()
                     Text("\(state) · \(Int(value.rounded()))/100")
                         .font(.system(size: 15, weight: .bold, design: .monospaced))
-                        .foregroundStyle(value < 25 ? Theme.accent : .white)
+                        .foregroundStyle(value < 25 ? Theme.accent : Theme.ink)
                 }
-                PixelBlocksBar(filled: Int((value / 10).rounded(.up)), total: 10, color: need.color)
+                BlocksBar(filled: Int((value / 10).rounded(.up)), total: 10, color: need.color)
             }
             .padding(14)
-            .pixelPanel()
+            .sketchCard()
 
             VStack(alignment: .leading, spacing: 16) {
                 Row(symbol: "arrow.up", title: "ÇA MONTE", text: need.rises, color: need.color)
@@ -536,17 +528,18 @@ struct CareNeedSheet: View {
             }
 
             HStack(alignment: .top, spacing: 12) {
-                PixelSprite(grid: PixelIcon.heart, pixel: 2)
+                Doodle(symbol: "heart", fill: Theme.pink, size: 14)
                     .padding(.top, 3)
                 Text("Si ses jauges sont trop basses et que rien n'est coché, Pochi boude. Une seule habitude cochée suffit à le consoler.")
                     .font(.system(size: 14))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(Theme.ink.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .pixelPanel(fill: Color(white: 0.13))
+            .sketchCard(fill: Theme.yellow.opacity(0.45))
         }
+        .foregroundStyle(Theme.ink)
         .padding(.horizontal, 24)
         .padding(.top, 32)
         .padding(.bottom, 16)
@@ -573,7 +566,7 @@ struct CareNeedSheet: View {
                         .foregroundStyle(color)
                     Text(text)
                         .font(.system(size: 16))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }

@@ -1,308 +1,45 @@
 import SwiftUI
 
-// MARK: - Pixel corgi
+// MARK: - Pochi
 
-/// Pochi, the corgi from the portfolio (portfolio/src/components/pochi/PochiSprite.tsx),
-/// adapted into one pose per mood.
+/// Pochi's pose, which follows your day.
 enum CorgiPose {
     case box, sleeping, phone, sitting, standing, happy
-    /// Neglected: curled up, sulking under a little rain cloud.
+    /// Neglected: lying down, sulking under a little rain cloud.
     case sulking
 }
 
-private struct Pixel {
-    let x: Int
-    let y: Int
-    let c: Character
-}
-
-private enum Pochi {
-    static let palette: [Character: Color] = [
-        "K": Color(hex: 0x2B1D16), // outline
-        "O": Color(hex: 0xE8913A), // red fur
-        "D": Color(hex: 0xC46F2A), // fur shadow
-        "W": Color(hex: 0xFFF6EA), // white (blaze, muzzle, chest, socks)
-        "P": Color(hex: 0xF4A3A3), // inner ears, tongue
-        "N": Color(hex: 0x120C09), // nose
-        "S": Color(hex: 0xE6D6C3), // far-side socks, in shadow
-        "C": Color(hex: 0xC8925A), // cardboard
-        "X": Color(hex: 0x8C5C30), // cardboard shadow
-        "L": Color(hex: 0xBFE3FF), // phone screen
-        "M": Color(hex: 0x5B8FCB), // lines on the screen
-    ]
-
-    // 24 × 16, head three-quarters to the left, body in profile, short legs.
-    static let standing = [
-        "..KK......KK............",
-        ".KOOK....KOOK...........",
-        ".KOPOK..KOPOK...........",
-        ".KOPPOKKOPPOK...........",
-        "KOOOOOWWOOOOOKKKKKKKKK..",
-        "KOOKOOWWOOKOOOOOOOOOOOK.",
-        "KOOKOWWWWOKOOOOOOOOOOOOK",
-        "KOOWWWNNWWWOOOOOOOOOOOOK",
-        ".KOWWWWWWWWOOOOOOOOOOODK",
-        "..KWWWWWWWKOOOOOOOOOOODK",
-        "...KWWWWWWOOOOOOOOOOODDK",
-        "...KWWWWWWWOOOOOOOOODDK.",
-        "....KWWWWWWWWWWWWWWWWDK.",
-        "....KWWKSSKKKKKKKWWKSSK.",
-        "....KWWKSSK.....KWWKSSK.",
-        "....KKKKKKK.....KKKKKKK.",
-    ]
-
-    // The next three poses come from the portfolio (src/components/pochi/PochiSprite.tsx).
-
-    /// Sitting: same head, rounded back down to the rear, hind leg in front.
-    static let sit = [
-        "..KK......KK............",
-        ".KOOK....KOOK...........",
-        ".KOPOK..KOPOK...........",
-        ".KOPPOKKOPPOK...........",
-        "KOOOOOWWOOOOOKK.........",
-        "KOOKOOWWOOKOOOOK........",
-        "KOOKOWWWWOKOOOOOK.......",
-        "KOOWWWNNWWWOOOOOOK......",
-        ".KOWWWWWWWWOOOOOOOK.....",
-        "..KWWWWWWWKOOOOODOOK....",
-        "...KWWWWWWOOOOODOOODK...",
-        "...KWWWWWWOOOODOOOODK...",
-        "....KWWWWKOOOODOOODDK...",
-        "....KWWKSSKOOOOOODDDK...",
-        "....KWWKSSKWWWKDDDDK....",
-        "....KKKKKKKKKKKKKKKK....",
-    ]
-
-    /// Begging: up on its hind legs, front paws folded on its chest. 19 rows, drawn 3 higher.
-    static let beg = [
-        "..KK......KK............",
-        ".KOOK....KOOK...........",
-        ".KOPOK..KOPOK...........",
-        ".KOPPOKKOPPOK...........",
-        "KOOOOOWWOOOOOK..........",
-        "KOOKOOWWOOKOOK..........",
-        "KOOKOWWWWOKOOK..........",
-        "KOOWWWNNWWWOOK..........",
-        ".KOWWWWWWWWOOK..........",
-        "..KWWWWWWWWOOK..........",
-        "KKKWWWWWWWOOOOK.........",
-        "KWWKWWWWWWOOOOK.........",
-        "KKKKWWWWWWOOOOK.........",
-        ".KSSKWWWWWOOOOK.........",
-        ".KKKKWWWWOOOODK.........",
-        "...KWWWWOOOODDK.........",
-        "...KWWWOOOODDDK.........",
-        "...KWWKDDDDKWWK.........",
-        "..KKKKKK..KKKKK.........",
-    ]
-    static let begRise = 3
-
-    /// Napping: lying down, head on its front paws, eyes shut (drawn in the grid).
-    static let nap = [
-        "..KK......KK............",
-        ".KOOK....KOOK...........",
-        ".KOPOK..KOPOK...........",
-        ".KOPPOKKOPPOK...........",
-        "KOOOOOWWOOOOOKKKKKKKK...",
-        "KOOOOOWWOOOOOOOOOOOOOK..",
-        "KOOKOWWWWOKOOOOOOOOOOOK.",
-        "KOOWWWNNWWWOOOOOOOOOODDK",
-        ".KOWWWWWWWWOOOOOOOOODDDK",
-        "KWWWKWWWWKWWWWWWWWWDDDK.",
-        "KKKKKKKKKKKKKKKKKKKKKKK.",
-    ]
-    /// Breathing in: the back rises by one pixel.
-    static let breath = (14...20).map { Pixel(x: $0, y: 3, c: "K") } + (14...20).map { Pixel(x: $0, y: 4, c: "O") }
-
-    /// Sitting upright, three-quarters: big head, small body, tail plume on the side.
-    static let sitting = [
-        "..KK......KK....",
-        ".KOOK....KOOK...",
-        ".KOPOK..KOPOK...",
-        ".KOPPOKKOPPOK...",
-        "KOOOOOWWOOOOK...",
-        "KOOKOOWWOOKOK...",
-        "KOOKOWWWWOKOK...",
-        "KOOWWWNNWWWOK...",
-        ".KOWWWWWWWWK....",
-        "..KWWWWWWWKOK.KK",
-        "..KWWWWWWWOOOKOK",
-        "..KWWWWWWOOOOOOK",
-        "..KWWKWWWOOOODK.",
-        "..KWWKWWKOOODDK.",
-        "..KWWKWWKWWWDK..",
-        "..KKKKKKKKKKKK..",
-    ]
-
-    /// Just the head, closed on the right, to peek out of the box.
-    static let head = [
-        "..KK......KK.",
-        ".KOOK....KOOK",
-        ".KOPOK..KOPOK",
-        ".KOPPOKKOPPOK",
-        "KOOOOOWWOOOOK",
-        "KOOKOOWWOOKOK",
-        "KOOKOWWWWOKOK",
-        "KOOWWWNNWWWOK",
-        ".KOWWWWWWWWK.",
-        "..KWWWWWWWK..",
-    ]
-
-    static let box = [
-        "KKKKKKKKKKKKKKKK",
-        "KCCCCCCXXCCCCCCK",
-        "KCCCCCCXXCCCCCCK",
-        "KCCCCCCXXCCCCCCK",
-        "KCCCCCCCCCCCCCCK",
-        "KXXXXXXXXXXXXXXK",
-        "KKKKKKKKKKKKKKKK",
-    ]
-    static let leftFlap = ["CK.", "KCK", ".KC"]
-    static let rightFlap = [".KC", "KCK", "CK."]
-
-    /// Phone outline; the screen inside is drawn per frame so it scrolls.
-    static let phone = [
-        "KKKK",
-        "K..K",
-        "K..K",
-        "K..K",
-        "KKKK",
-    ]
-
-    /// Closed eyelids: the 2-px eyes turn back to fur, a line stays at the bottom.
-    static let blink = [Pixel(x: 3, y: 5, c: "O"), Pixel(x: 10, y: 5, c: "O")]
-    /// Open mouth under the nose, pink tongue.
-    static let tongue = [Pixel(x: 6, y: 8, c: "P"), Pixel(x: 7, y: 8, c: "P"), Pixel(x: 7, y: 9, c: "P")]
-    /// Tail plume, flashed on and off to wag.
-    static let tail = [
-        Pixel(x: 22, y: 2, c: "K"), Pixel(x: 23, y: 2, c: "K"), Pixel(x: 21, y: 3, c: "K"),
-        Pixel(x: 22, y: 3, c: "O"), Pixel(x: 23, y: 3, c: "K"), Pixel(x: 22, y: 4, c: "O"),
-        Pixel(x: 23, y: 4, c: "K"),
-    ]
-}
-
-/// A drawable piece placed on the canvas: a grid, or loose pixels.
-private struct Layer {
-    var grid: [String] = []
-    var pixels: [Pixel] = []
-    var x = 0
-    var y = 0
-}
-
-/// Pochi, whose pose follows your day. Frame-by-frame animation, in the spirit of a sprite.
-/// Tap it and it gets happy for a moment.
-struct PixelCorgi: View {
+/// Pochi drawn as a sketchbook doodle: a front-facing corgi with ink outlines,
+/// on a 120 × 100 canvas. Tail wag, breathing and blinks are animated; tap it and
+/// it gets happy for a moment.
+struct PochiView: View {
     let pose: CorgiPose
+    /// Height on screen; the width is 1.2 times that.
+    var size: CGFloat = 92
     var onTap: () -> Void = {}
 
-    @State private var tick = 0 // ~14 fps
     @State private var blink = false
     @State private var excitedUntil = Date.distantPast
 
-    var pixel: CGFloat = 3
-    /// 30 × 19: Pochi is 24 wide, the extra room in front of it is for the phone,
-    /// and the top 3 rows are for when it stands up on its hind legs.
-    private static let width = 30
-    private static let height = 19
-    private static let frame: Duration = .milliseconds(70)
-
     private var excited: Bool { pose == .happy || excitedUntil > .now }
 
-    private var layers: [Layer] {
-        let eyesClosed = pose == .sleeping || blink
-        // Idle: two quick flicks every ~3.6 s. Excited: steady wag.
-        let idleFlick = [41, 42, 45, 46].contains(tick % 51)
-        let tailUp = excited ? (tick / 2) % 2 == 0 : idleFlick
-
-        switch pose {
-        case .box:
-            let peek = (tick / 25) % 3 == 2 ? 2 : 0
-            var layers = [Layer(grid: Pochi.head, x: 5, y: 1 + peek)]
-            if eyesClosed { layers.append(Layer(pixels: Pochi.blink, x: 5, y: 1 + peek)) }
-            if excited { layers.append(Layer(pixels: Pochi.tongue, x: 5, y: 1 + peek)) }
-            layers += [
-                Layer(grid: Pochi.box, x: 4, y: 9),
-                Layer(grid: Pochi.leftFlap, x: 1, y: 6),
-                Layer(grid: Pochi.rightFlap, x: 20, y: 6),
-            ]
-            return layers
-        case .phone:
-            // Sitting up, phone held in both front paws, half-closed eyes looking down at it.
-            let scroll = (tick / 5) % 4
-            var screen: [Pixel] = []
-            for row in 0..<3 {
-                let line = (row + scroll) % 2 == 0
-                for col in 0..<2 { screen.append(Pixel(x: col, y: row, c: line && col == 0 ? "M" : "L")) }
-            }
-            let paws = [Pixel(x: 2, y: 12, c: "W"), Pixel(x: 7, y: 12, c: "W"),
-                        Pixel(x: 2, y: 13, c: "K"), Pixel(x: 7, y: 13, c: "K")]
-            return [
-                Layer(grid: Pochi.sitting, x: 7, y: 0),
-                Layer(pixels: Pochi.blink, x: 7, y: 0),
-                Layer(grid: Pochi.phone, x: 10, y: 10),
-                Layer(pixels: screen, x: 11, y: 11),
-                Layer(pixels: paws, x: 7, y: 0),
-            ]
-        case .sulking:
-            return [Layer(grid: Pochi.nap, y: 5)]
-        case .sleeping:
-            var layers = [Layer(grid: Pochi.nap, y: 5)]
-            if (tick / 14) % 2 == 0 { layers.append(Layer(pixels: Pochi.breath, y: 5)) }
-            return layers
-        case .sitting:
-            var layers = [Layer(grid: Pochi.sit)]
-            if excited { layers.append(Layer(pixels: Pochi.tongue)) }
-            if eyesClosed { layers.append(Layer(pixels: Pochi.blink)) }
-            return layers
-        case .happy:
-            let y = -Pochi.begRise
-            return [Layer(grid: Pochi.beg, y: y), Layer(pixels: Pochi.tongue, y: y)]
-                + (eyesClosed ? [Layer(pixels: Pochi.blink, y: y)] : [])
-        case .standing:
-            var layers: [Layer] = []
-            if tailUp { layers.append(Layer(pixels: Pochi.tail)) }
-            layers.append(Layer(grid: Pochi.standing))
-            if excited { layers.append(Layer(pixels: Pochi.tongue)) }
-            if eyesClosed { layers.append(Layer(pixels: Pochi.blink)) }
-            return layers
-        }
-    }
-
     var body: some View {
-        let p = pixel
-        // Pushed against the right edge, next to the speech bubble.
-        let shift = 6
-        let layers = layers.map { Layer(grid: $0.grid, pixels: $0.pixels, x: $0.x + shift, y: $0.y + Pochi.begRise) }
-        let hop = excited && pose != .box && (tick / 3) % 2 == 0
-
-        Canvas { ctx, _ in
-            func fill(_ x: Int, _ y: Int, _ c: Character) {
-                guard let color = Pochi.palette[c] else { return }
-                // A hair over 1 px so neighbours never leave a seam.
-                ctx.fill(Path(CGRect(x: CGFloat(x) * p, y: CGFloat(y) * p, width: p + 0.1, height: p + 0.1)),
-                         with: .color(color))
+        TimelineView(.animation(minimumInterval: 1 / 30)) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            let hop = excited && pose != .box ? abs(sin(t * 9)) * 4 : 0
+            Canvas { ctx, canvas in
+                ctx.scaleBy(x: canvas.width / 120, y: canvas.height / 100)
+                CorgiDrawing(pose: pose, time: t, excited: excited, blink: blink).draw(in: ctx)
             }
-            if pose == .phone {
-                // Blue glow of the screen on Pochi's face.
-                let center = CGPoint(x: 18 * p, y: 12 * p)
-                ctx.fill(Path(ellipseIn: CGRect(x: center.x - 6 * p, y: center.y - 6 * p, width: 12 * p, height: 12 * p)),
-                         with: .radialGradient(Gradient(colors: [Color(hex: 0x7CC4FF).opacity(0.4), .clear]),
-                                               center: center, startRadius: 0, endRadius: 6 * p))
-            }
-            for layer in layers {
-                for (r, line) in layer.grid.enumerated() {
-                    for (c, ch) in line.enumerated() { fill(layer.x + c, layer.y + r, ch) }
-                }
-                for px in layer.pixels { fill(layer.x + px.x, layer.y + px.y, px.c) }
-            }
+            .offset(y: -hop * size / 100)
         }
-        .frame(width: CGFloat(Self.width) * p, height: CGFloat(Self.height) * p)
-        .offset(y: hop ? -p : 0)
+        .frame(width: size * 1.2, height: size)
         .overlay(alignment: .topLeading) {
+            let s = size / 100
             switch pose {
-            case .sleeping: Zzz().offset(x: 20 * p, y: 4 * p)
-            case .sulking: RainCloud(pixel: p).offset(x: 6 * p, y: 0)
-            case .happy: Hearts().offset(x: 12 * p, y: -p)
+            case .sleeping: Zzz(size: size).offset(x: 78 * s, y: 18 * s)
+            case .sulking: RainCloud(size: size).offset(x: 18 * s, y: -6 * s)
+            case .happy: Hearts(size: size).offset(x: 54 * s, y: 4 * s)
             default: EmptyView()
             }
         }
@@ -311,12 +48,6 @@ struct PixelCorgi: View {
             excitedUntil = .now.addingTimeInterval(1.5)
             Feedback.pet()
             onTap()
-        }
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: Self.frame)
-                tick += 1
-            }
         }
         .task {
             while !Task.isCancelled {
@@ -329,70 +60,290 @@ struct PixelCorgi: View {
     }
 }
 
-private extension Color {
-    init(hex: UInt32) {
-        self.init(red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255,
-                  blue: Double(hex & 0xFF) / 255)
+/// The drawing itself. Coordinates are in the 120 × 100 canvas; the head is drawn
+/// around (60, 40) and moved into place, the right half of the face mirrors the left.
+private struct CorgiDrawing {
+    let pose: CorgiPose
+    let time: Double
+    let excited: Bool
+    let blink: Bool
+
+    static let fur = Color(hex: 0xF0A04B)
+    static let cream = Color(hex: 0xFFFBF2)
+    static let blush = Color(hex: 0xF4A3A3)
+    static let cardboard = Color(hex: 0xDDA867)
+    static let screen = Color(hex: 0xBFE3FF)
+
+    private enum Eyes { case open, closed, happy, half, sad }
+
+    private var eyes: Eyes {
+        switch pose {
+        case .sleeping: .closed
+        case .happy: .happy
+        case .phone: .half
+        case .sulking: .sad
+        default: blink ? .closed : (excited ? .happy : .open)
+        }
+    }
+
+    private var lying: Bool { pose == .sleeping || pose == .sulking }
+
+    func draw(in ctx: GraphicsContext) {
+        let wag = excited ? sin(time * 18) * 0.5 : sin(time * 2.5) * 0.18
+        switch pose {
+        case .box:
+            let peek = (sin(time * 1.6) + 1) * 3
+            backFlaps(ctx)
+            head(ctx, center: CGPoint(x: 60, y: 46 + peek))
+            box(ctx)
+            paw(ctx, CGPoint(x: 47, y: 64), rx: 7, ry: 4.5)
+            paw(ctx, CGPoint(x: 73, y: 64), rx: 7, ry: 4.5)
+        case .sleeping, .sulking:
+            let breath = pose == .sleeping ? sin(time * 2) * 1.2 : 0
+            tail(ctx, base: CGPoint(x: 98, y: 82), angle: pose == .sleeping ? 0.3 : 0.9)
+            outlined(ctx, oval(66, 84 - breath / 2, 40, 13 + breath / 2), Self.fur)
+            head(ctx, center: CGPoint(x: 44, y: 62), tilt: pose == .sleeping ? -0.12 : 0.06)
+            paw(ctx, CGPoint(x: 30, y: 92), rx: 9, ry: 5)
+            paw(ctx, CGPoint(x: 52, y: 93), rx: 9, ry: 5)
+        default:
+            tail(ctx, base: CGPoint(x: 84, y: 74), angle: -0.5 + wag)
+            outlined(ctx, oval(60, 75, 29, 21), Self.fur)
+            ctx.fill(oval(60, 77, 15, 15), with: .color(Self.cream))
+            if pose == .phone {
+                head(ctx, center: CGPoint(x: 60, y: 40), tilt: 0.05)
+                phone(ctx)
+                paw(ctx, CGPoint(x: 48, y: 80), rx: 6, ry: 5)
+                paw(ctx, CGPoint(x: 72, y: 80), rx: 6, ry: 5)
+            } else {
+                head(ctx, center: CGPoint(x: 60, y: 40), tilt: excited ? sin(time * 9) * 0.06 : 0)
+            }
+            paw(ctx, CGPoint(x: 48, y: 94), rx: 8, ry: 5)
+            paw(ctx, CGPoint(x: 72, y: 94), rx: 8, ry: 5)
+        }
+    }
+
+    // MARK: Parts
+
+    private func head(_ ctx: GraphicsContext, center: CGPoint, tilt: Double = 0) {
+        var ctx = ctx
+        ctx.translateBy(x: center.x, y: center.y)
+        ctx.rotate(by: .radians(tilt))
+        ctx.translateBy(x: -60, y: -40)
+
+        mirrored(ctx) { ear($0) }
+        outlined(ctx, oval(60, 40, 31, 25), Self.fur)
+        // Markings: a blaze down the forehead and a white muzzle.
+        ctx.fill(oval(60, 29, 4.5, 12), with: .color(Self.cream))
+        ctx.fill(oval(60, 50, 15, 10.5), with: .color(Self.cream))
+        mirrored(ctx) { side in
+            side.fill(oval(41, 50, 5, 3), with: .color(Self.blush.opacity(0.6)))
+            eye(side)
+        }
+        let tongue = excited || pose == .happy
+        if tongue { outlined(ctx, oval(60, 56.5, 3.4, 4), Self.blush, width: 2) }
+        ctx.fill(oval(60, 46.5, 4.2, 3), with: .color(Theme.ink))
+        var mouth = Path()
+        mouth.move(to: CGPoint(x: 60, y: 49))
+        mouth.addLine(to: CGPoint(x: 60, y: 52))
+        if pose == .sulking {
+            mouth.move(to: CGPoint(x: 55.5, y: 54.5))
+            mouth.addQuadCurve(to: CGPoint(x: 64.5, y: 54.5), control: CGPoint(x: 60, y: 50.5))
+        } else {
+            mouth.addQuadCurve(to: CGPoint(x: 55, y: 52.5), control: CGPoint(x: 57.5, y: 55.5))
+            mouth.move(to: CGPoint(x: 60, y: 52))
+            mouth.addQuadCurve(to: CGPoint(x: 65, y: 52.5), control: CGPoint(x: 62.5, y: 55.5))
+        }
+        ctx.stroke(mouth, with: .color(Theme.ink), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+    }
+
+    /// Left ear; it droops outward when Pochi sulks.
+    private func ear(_ ctx: GraphicsContext) {
+        var ctx = ctx
+        if pose == .sulking {
+            ctx.translateBy(x: 40, y: 26)
+            ctx.rotate(by: .radians(-0.55))
+            ctx.translateBy(x: -40, y: -26)
+        }
+        var outer = Path()
+        outer.move(to: CGPoint(x: 30, y: 33))
+        outer.addQuadCurve(to: CGPoint(x: 35, y: 3), control: CGPoint(x: 26, y: 12))
+        outer.addQuadCurve(to: CGPoint(x: 52, y: 20), control: CGPoint(x: 46, y: 6))
+        outer.closeSubpath()
+        outlined(ctx, outer, Self.fur)
+        var inner = Path()
+        inner.move(to: CGPoint(x: 34, y: 27))
+        inner.addQuadCurve(to: CGPoint(x: 36.5, y: 10), control: CGPoint(x: 32, y: 15))
+        inner.addQuadCurve(to: CGPoint(x: 46, y: 20), control: CGPoint(x: 43, y: 12))
+        inner.closeSubpath()
+        ctx.fill(inner, with: .color(Self.blush))
+    }
+
+    /// Left eye.
+    private func eye(_ ctx: GraphicsContext) {
+        let x = 47.0, y = 40.0
+        let ink = GraphicsContext.Shading.color(Theme.ink)
+        let line = StrokeStyle(lineWidth: 2.4, lineCap: .round)
+        switch eyes {
+        case .open:
+            ctx.fill(oval(x, y, 3.6, 3.8), with: ink)
+            ctx.fill(oval(x + 1.1, y - 1.3, 1.1, 1.1), with: .color(.white))
+        case .closed:
+            var arc = Path()
+            arc.move(to: CGPoint(x: x - 4, y: y))
+            arc.addQuadCurve(to: CGPoint(x: x + 4, y: y), control: CGPoint(x: x, y: y + 3.5))
+            ctx.stroke(arc, with: ink, style: line)
+        case .happy:
+            var arc = Path()
+            arc.move(to: CGPoint(x: x - 4, y: y + 1.5))
+            arc.addQuadCurve(to: CGPoint(x: x + 4, y: y + 1.5), control: CGPoint(x: x, y: y - 4.5))
+            ctx.stroke(arc, with: ink, style: line)
+        case .half:
+            var lid = Path()
+            lid.addArc(center: CGPoint(x: x, y: y + 1), radius: 3.6, startAngle: .zero, endAngle: .degrees(180), clockwise: false)
+            lid.closeSubpath()
+            ctx.fill(lid, with: ink)
+            var brow = Path()
+            brow.move(to: CGPoint(x: x - 4.5, y: y + 1))
+            brow.addLine(to: CGPoint(x: x + 4.5, y: y + 1))
+            ctx.stroke(brow, with: ink, style: line)
+        case .sad:
+            ctx.fill(oval(x, y + 2, 3.2, 3.4), with: ink)
+            ctx.fill(oval(x + 0.9, y + 0.9, 1, 1), with: .color(.white))
+            var brow = Path()
+            brow.move(to: CGPoint(x: x - 5, y: y - 3.5))
+            brow.addLine(to: CGPoint(x: x + 4, y: y - 6.5))
+            ctx.stroke(brow, with: ink, style: line)
+        }
+    }
+
+    private func tail(_ ctx: GraphicsContext, base: CGPoint, angle: Double) {
+        var ctx = ctx
+        ctx.translateBy(x: base.x, y: base.y)
+        ctx.rotate(by: .radians(angle))
+        outlined(ctx, oval(9, 0, 11, 6.5), Self.fur)
+        ctx.fill(oval(16, 0, 4, 3.5), with: .color(Self.cream))
+    }
+
+    private func paw(_ ctx: GraphicsContext, _ at: CGPoint, rx: Double, ry: Double) {
+        outlined(ctx, oval(at.x, at.y, rx, ry), Self.cream, width: 2.2)
+    }
+
+    private func phone(_ ctx: GraphicsContext) {
+        let body = Path(roundedRect: CGRect(x: 50, y: 62, width: 20, height: 28), cornerRadius: 4)
+        outlined(ctx, body, Theme.ink)
+        let screenRect = CGRect(x: 52.5, y: 65, width: 15, height: 22)
+        ctx.fill(Path(roundedRect: screenRect, cornerRadius: 2), with: .color(Self.screen))
+        // Lines scrolling up the screen.
+        let scroll = (time * 6).truncatingRemainder(dividingBy: 5)
+        var lines = Path()
+        for i in 0..<5 {
+            let y = screenRect.maxY - 3 - (Double(i) * 5 + scroll).truncatingRemainder(dividingBy: 20)
+            lines.move(to: CGPoint(x: 55, y: y))
+            lines.addLine(to: CGPoint(x: i % 2 == 0 ? 65 : 61, y: y))
+        }
+        ctx.stroke(lines, with: .color(Theme.periwinkle), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+    }
+
+    private func backFlaps(_ ctx: GraphicsContext) {
+        mirrored(ctx) { side in
+            var flap = Path()
+            flap.addLines([CGPoint(x: 22, y: 64), CGPoint(x: 8, y: 44), CGPoint(x: 32, y: 46), CGPoint(x: 40, y: 64)])
+            flap.closeSubpath()
+            outlined(side, flap, Self.cardboard.opacity(0.85))
+        }
+    }
+
+    private func box(_ ctx: GraphicsContext) {
+        outlined(ctx, Path(roundedRect: CGRect(x: 18, y: 63, width: 84, height: 36), cornerRadius: 3), Self.cardboard)
+        var tape = Path()
+        tape.move(to: CGPoint(x: 60, y: 64))
+        tape.addLine(to: CGPoint(x: 60, y: 74))
+        ctx.stroke(tape, with: .color(Theme.ink.opacity(0.35)), lineWidth: 2)
+        ctx.draw(Text("FRAGILE").font(.system(size: 7, weight: .heavy)).foregroundStyle(Theme.ink.opacity(0.45)),
+                 at: CGPoint(x: 60, y: 86))
+    }
+
+    // MARK: Helpers
+
+    private func oval(_ cx: Double, _ cy: Double, _ rx: Double, _ ry: Double) -> Path {
+        Path(ellipseIn: CGRect(x: cx - rx, y: cy - ry, width: rx * 2, height: ry * 2))
+    }
+
+    private func outlined(_ ctx: GraphicsContext, _ path: Path, _ fill: Color, width: Double = 2.6) {
+        ctx.fill(path, with: .color(fill))
+        ctx.stroke(path, with: .color(Theme.ink), style: StrokeStyle(lineWidth: width, lineJoin: .round))
+    }
+
+    /// Draws `part` as given, then mirrored across the middle of the canvas.
+    private func mirrored(_ ctx: GraphicsContext, _ part: (GraphicsContext) -> Void) {
+        part(ctx)
+        var flipped = ctx
+        flipped.translateBy(x: 120, y: 0)
+        flipped.scaleBy(x: -1, y: 1)
+        part(flipped)
     }
 }
 
+// MARK: - Mood effects
+
 private struct Zzz: View {
+    let size: CGFloat
+
     var body: some View {
         PhaseAnimator([0, 1, 2]) { phase in
             HStack(alignment: .bottom, spacing: 2) {
                 ForEach(0..<3) { i in
                     Text("z")
-                        .font(.system(size: CGFloat(10 + i * 4), weight: .bold, design: .monospaced))
-                        .opacity(i <= phase ? 0.8 : 0)
-                        .offset(y: CGFloat(-i * 6))
+                        .font(Theme.hand(size * (0.12 + CGFloat(i) * 0.05)))
+                        .opacity(i <= phase ? 0.9 : 0)
+                        .offset(y: CGFloat(-i) * size * 0.07)
                 }
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.periwinkle)
         } animation: { _ in .easeInOut(duration: 0.6) }
     }
 }
 
 /// A small grey cloud with rain falling, over a sulking Pochi.
 private struct RainCloud: View {
-    let pixel: CGFloat
+    let size: CGFloat
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.15)) { timeline in
-            let frame = Int(timeline.date.timeIntervalSinceReferenceDate / 0.15)
-            Canvas { ctx, _ in
-                let p = pixel
-                func px(_ x: Int, _ y: Int, _ color: Color) {
-                    ctx.fill(Path(CGRect(x: CGFloat(x) * p, y: CGFloat(y) * p, width: p + 0.1, height: p + 0.1)),
-                             with: .color(color))
+        TimelineView(.animation(minimumInterval: 1 / 20)) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            Canvas { ctx, canvas in
+                ctx.scaleBy(x: canvas.width / 40, y: canvas.height / 34)
+                var cloud = Path(roundedRect: CGRect(x: 4, y: 9, width: 32, height: 9), cornerRadius: 4.5)
+                for (x, y, r) in [(13.0, 9.0, 6.0), (23.0, 7.0, 7.5), (31.0, 11.0, 4.5)] {
+                    cloud = cloud.union(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)))
                 }
-                let cloud = Color(white: 0.55), dark = Color(white: 0.4)
-                for x in 3...8 { px(x, 0, cloud) }
-                for x in 1...10 { px(x, 1, cloud) }
-                for x in 0...11 { px(x, 2, cloud) }
-                for x in 1...10 { px(x, 3, dark) }
-                // Drops falling in staggered columns.
-                for (i, x) in [2, 5, 8, 10].enumerated() {
-                    let y = 5 + (frame + i * 2) % 5
-                    px(x, y, Color(red: 0.55, green: 0.75, blue: 1))
+                ctx.fill(cloud, with: .color(Color(hex: 0xD6DAE2)))
+                ctx.stroke(cloud, with: .color(Theme.ink), style: StrokeStyle(lineWidth: 1.8, lineJoin: .round))
+                var drops = Path()
+                for (i, x) in [10.0, 18.0, 26.0, 32.0].enumerated() {
+                    let y = 21 + ((t * 14) + Double(i) * 4).truncatingRemainder(dividingBy: 11)
+                    drops.move(to: CGPoint(x: x, y: y))
+                    drops.addLine(to: CGPoint(x: x - 1, y: y + 3))
                 }
+                ctx.stroke(drops, with: .color(Theme.periwinkle), style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
             }
-            .frame(width: 12 * pixel, height: 10 * pixel)
+            .frame(width: size * 0.4, height: size * 0.34)
         }
     }
 }
 
 /// Little hearts drifting up.
 private struct Hearts: View {
+    let size: CGFloat
+
     var body: some View {
         TimelineView(.animation) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             ZStack {
                 ForEach(0..<3) { i in
                     let progress = (t / 1.8 + Double(i) / 3).truncatingRemainder(dividingBy: 1)
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 8 + CGFloat(i) * 2))
-                        .foregroundStyle(Color(red: 0.93, green: 0.45, blue: 0.55))
-                        .offset(x: CGFloat(i - 1) * 12 + sin(progress * .pi * 2) * 3, y: -progress * 34)
+                    Doodle(symbol: "heart", fill: Theme.pink, size: size * (0.09 + CGFloat(i) * 0.02))
+                        .offset(x: CGFloat(i - 1) * size * 0.13 + sin(progress * .pi * 2) * 3, y: -progress * size * 0.36)
                         .opacity(1 - progress)
                 }
             }
@@ -402,15 +353,14 @@ private struct Hearts: View {
 
 // MARK: - Speech bubble
 
-/// Pixel-art dialogue bubble: stepped corners, a tail pointing at Pochi, a name tag,
+/// Dialogue bubble: ink outline, a tail pointing at Pochi, a handwritten name tag,
 /// and a line typed out with a cursor. The bubble hugs its text, but the space it sits in
 /// is always 3 lines high so the screen below never moves.
 struct SpeechBubble: View {
     let text: String
     @State private var shown = 0
 
-    private static let font = Font.system(size: 15, weight: .regular, design: .monospaced)
-    private static let fill = Color(white: 0.13)
+    private static let font = Font.system(size: 15, weight: .medium)
 
     var body: some View {
         ZStack(alignment: .leading) {
@@ -441,18 +391,46 @@ struct SpeechBubble: View {
 
     private func bubble(@ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("POCHI")
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                .tracking(2)
+            Text("Pochi")
+                .font(Theme.hand(15))
                 .foregroundStyle(Theme.accent)
             content()
                 .font(Self.font)
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink)
         }
-        .padding(.leading, PixelFrame.tailWidth() + 14)
+        .padding(.leading, BubbleShape.tail + 14)
         .padding(.trailing, 14)
         .padding(.vertical, 12)
-        .background(PixelFrame(tail: true).fill(Self.fill))
+        .background {
+            ZStack {
+                BubbleShape().fill(Theme.ink).offset(Theme.lift)
+                BubbleShape().fill(Theme.card)
+                BubbleShape().stroke(Theme.ink, lineWidth: Theme.outline)
+            }
+        }
+        .padding(.trailing, Theme.lift.width)
+    }
+}
+
+/// Rounded bubble with a small tail on the left edge.
+struct BubbleShape: Shape {
+    static let tail: CGFloat = 10
+    var radius: CGFloat = 16
+
+    func path(in rect: CGRect) -> Path {
+        let l = rect.minX + Self.tail, r = rect.maxX, t = rect.minY, b = rect.maxY, cy = rect.midY
+        let rad = min(radius, (b - t) / 2)
+        var path = Path()
+        path.move(to: CGPoint(x: l + rad, y: t))
+        path.addArc(tangent1End: CGPoint(x: r, y: t), tangent2End: CGPoint(x: r, y: b), radius: rad)
+        path.addArc(tangent1End: CGPoint(x: r, y: b), tangent2End: CGPoint(x: l, y: b), radius: rad)
+        path.addArc(tangent1End: CGPoint(x: l, y: b), tangent2End: CGPoint(x: l, y: t), radius: rad)
+        path.addLine(to: CGPoint(x: l, y: cy + 7))
+        path.addLine(to: CGPoint(x: rect.minX, y: cy))
+        path.addLine(to: CGPoint(x: l, y: cy - 7))
+        path.addArc(tangent1End: CGPoint(x: l, y: t), tangent2End: CGPoint(x: r, y: t), radius: rad)
+        path.closeSubpath()
+        return path
     }
 }
 
@@ -556,7 +534,7 @@ struct CorgiGallery: View {
             VStack(alignment: .leading, spacing: 34) {
                 ForEach(poses, id: \.1) { pose, name in
                     HStack(spacing: 20) {
-                        PixelCorgi(pose: pose)
+                        PochiView(pose: pose)
                         Text(name).font(Theme.mono(16)).tracking(2).foregroundStyle(.secondary)
                     }
                 }
@@ -564,7 +542,7 @@ struct CorgiGallery: View {
             .padding(30)
             .padding(.top, 40)
         }
-        .background(Color.black)
+        .background(DottedPaper())
     }
 }
 #endif
