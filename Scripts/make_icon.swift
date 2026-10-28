@@ -1,11 +1,11 @@
 // Generates the app icon from the corgi sprite.
-// Usage: swift Scripts/make_icon.swift HabitQuest/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+// Usage: swift Scripts/make_icon.swift Pochi/Assets.xcassets/AppIcon.appiconset/AppIcon.png
 
 
 import AppKit
 
 let size = 1024
-// Pochi's head (see PixelCorgi in HabitQuest/Corgi.swift), tongue out, chin closed.
+// Pochi's head (see PixelCorgi in Pochi/Corgi.swift), tongue out, chin closed.
 let sprite = [
     "..KK......KK.",
     ".KOOK....KOOK",
