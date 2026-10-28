@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		A10000000000000000000001 /* HabitQuest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HabitQuest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000001 /* Pochi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pochi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A10000000000000000000002 /* HabitQuest */ = {
+		A10000000000000000000002 /* Pochi */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = HabitQuest;
+			path = Pochi;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,7 +32,7 @@
 		A10000000000000000000004 = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000002 /* HabitQuest */,
+				A10000000000000000000002 /* Pochi */,
 				A10000000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +40,7 @@
 		A10000000000000000000005 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000001 /* HabitQuest.app */,
+				A10000000000000000000001 /* Pochi.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A10000000000000000000006 /* HabitQuest */ = {
+		A10000000000000000000006 /* Pochi */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A10000000000000000000007 /* Build configuration list for PBXNativeTarget "HabitQuest" */;
+			buildConfigurationList = A10000000000000000000007 /* Build configuration list for PBXNativeTarget "Pochi" */;
 			buildPhases = (
 				A10000000000000000000008 /* Sources */,
 				A10000000000000000000003 /* Frameworks */,
@@ -61,11 +61,11 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				A10000000000000000000002 /* HabitQuest */,
+				A10000000000000000000002 /* Pochi */,
 			);
-			name = HabitQuest;
-			productName = HabitQuest;
-			productReference = A10000000000000000000001 /* HabitQuest.app */;
+			name = Pochi;
+			productName = Pochi;
+			productReference = A10000000000000000000001 /* Pochi.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -83,7 +83,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A1000000000000000000000B /* Build configuration list for PBXProject "HabitQuest" */;
+			buildConfigurationList = A1000000000000000000000B /* Build configuration list for PBXProject "Pochi" */;
 			developmentRegion = fr;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -97,7 +97,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A10000000000000000000006 /* HabitQuest */,
+				A10000000000000000000006 /* Pochi */,
 			);
 		};
 /* End PBXProject section */
@@ -204,7 +204,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A10000000000000000000007 /* Build configuration list for PBXNativeTarget "HabitQuest" */ = {
+		A10000000000000000000007 /* Build configuration list for PBXNativeTarget "Pochi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1000000000000000000000E /* Debug */,
@@ -213,7 +213,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A1000000000000000000000B /* Build configuration list for PBXProject "HabitQuest" */ = {
+		A1000000000000000000000B /* Build configuration list for PBXProject "Pochi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1000000000000000000000C /* Debug */,

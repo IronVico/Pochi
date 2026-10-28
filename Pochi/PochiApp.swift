@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 @main
-struct HabitQuestApp: App {
+struct PochiApp: App {
     var body: some Scene {
         WindowGroup {
             #if DEBUG
