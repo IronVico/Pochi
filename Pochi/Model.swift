@@ -99,11 +99,12 @@ final class Habit {
 
 enum HabitColor {
     static let all: [(name: String, color: Color)] = [
-        ("orange", .orange), ("pink", .pink), ("purple", .purple), ("indigo", .indigo),
-        ("blue", .blue), ("teal", .teal), ("green", .green), ("red", .red),
+        ("orange", Color(hex: 0xF5A55B)), ("pink", Theme.pink), ("purple", Color(hex: 0xB89AEB)),
+        ("indigo", Theme.periwinkle), ("blue", Color(hex: 0x86C3F2)), ("teal", Color(hex: 0x7ED6CB)),
+        ("green", Theme.mint), ("red", Theme.coral),
     ]
 
     static func color(_ name: String) -> Color {
-        all.first { $0.name == name }?.color ?? .orange
+        all.first { $0.name == name }?.color ?? Theme.coral
     }
 }

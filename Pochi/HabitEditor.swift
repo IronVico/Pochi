@@ -28,7 +28,7 @@ struct HabitEditor: View {
                     HStack(spacing: 14) {
                         EmojiIcon(emoji: emoji, size: 36)
                             .frame(width: 60, height: 60)
-                            .background(PixelFrame().fill(HabitColor.color(colorName).opacity(0.2)))
+                            .sketchCard(fill: HabitColor.color(colorName), radius: 16)
                         TextField("Ex : Boire 2L d'eau", text: $name)
                             .font(.title3)
                     }
@@ -36,10 +36,13 @@ struct HabitEditor: View {
 
                 Section("Icône") {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 10) {
-                        ForEach(PixelEmoji.habitIcons, id: \.self) { e in
+                        ForEach(HabitDoodle.habitIcons, id: \.self) { e in
                             EmojiIcon(emoji: e, size: 26)
                                 .frame(width: 44, height: 44)
-                                .background(PixelFrame(unit: 2).fill(e == emoji ? HabitColor.color(colorName).opacity(0.3) : .clear))
+                                .background(RoundedRectangle(cornerRadius: 10).fill(e == emoji ? HabitColor.color(colorName) : .clear))
+                                .overlay {
+                                    if e == emoji { RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.ink, lineWidth: 2) }
+                                }
                                 .contentShape(.rect)
                                 .onTapGesture { emoji = e }
                         }
@@ -53,9 +56,10 @@ struct HabitEditor: View {
                             Circle()
                                 .fill(item.color)
                                 .frame(width: 30, height: 30)
+                                .overlay { Circle().strokeBorder(Theme.ink, lineWidth: item.name == colorName ? 3 : 1.5) }
                                 .overlay {
                                     if item.name == colorName {
-                                        Image(systemName: "checkmark").font(.caption.bold()).foregroundStyle(.white)
+                                        Image(systemName: "checkmark").font(.caption.weight(.heavy)).foregroundStyle(Theme.ink)
                                     }
                                 }
                                 .frame(maxWidth: .infinity)
@@ -74,6 +78,8 @@ struct HabitEditor: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(DottedPaper())
             .navigationTitle(habit == nil ? "Nouvelle habitude" : "Modifier")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

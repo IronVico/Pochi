@@ -65,7 +65,7 @@ struct GameStats {
     }
 }
 
-/// What each level adds to Pochi's doghouse (see IsoWorld).
+/// What each level adds to Pochi's doghouse (see NicheScene).
 struct BuildStep: Identifiable {
     let level: Int
     let name: String

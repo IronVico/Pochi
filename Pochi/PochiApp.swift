@@ -7,11 +7,11 @@ struct PochiApp: App {
         WindowGroup {
             #if DEBUG
             if CommandLine.arguments.contains("-corgiGallery") {
-                CorgiGallery().preferredColorScheme(.dark)
+                CorgiGallery().preferredColorScheme(.light)
             } else if CommandLine.arguments.contains("-nicheGallery") {
-                NicheGallery().preferredColorScheme(.dark)
+                NicheGallery().preferredColorScheme(.light)
             } else if CommandLine.arguments.contains("-iconGallery") {
-                PixelEmojiGallery().preferredColorScheme(.dark)
+                DoodleGallery().preferredColorScheme(.light)
             } else {
                 RootView()
             }
@@ -36,21 +36,21 @@ struct RootView: View {
             Tab {
                 TodayView()
             } label: {
-                Label { Text("Aujourd'hui") } icon: { PixelIcon.templateImage(PixelIcon.check) }
+                Label("Aujourd'hui", systemImage: "checkmark.circle")
             }
             Tab {
                 ProgressScreen()
             } label: {
-                Label { Text("Progression") } icon: { PixelIcon.templateImage(PixelIcon.chart) }
+                Label("Progression", systemImage: "chart.bar")
             }
             Tab {
                 NicheScreen()
             } label: {
-                Label { Text("Niche") } icon: { PixelIcon.templateImage(PixelIcon.house) }
+                Label("Niche", systemImage: "house")
             }
         }
         .tint(Theme.accent)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .overlay {
             ConfettiView(trigger: confetti)
                 .allowsHitTesting(false)
