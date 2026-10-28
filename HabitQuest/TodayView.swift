@@ -99,11 +99,11 @@ struct TodayView: View {
         withAnimation(.spring(duration: 0.35)) { habit.toggle() }
         let doneToday = habits.filter { $0.isDone() }.count
         if !habit.isDone() {
-            Haptics.uncheck()
+            Feedback.uncheck()
         } else if doneToday == habits.count {
-            Haptics.perfectDay()
+            Feedback.perfectDay()
         } else {
-            Haptics.check(combo: doneToday)
+            Feedback.check(combo: doneToday)
         }
     }
 
@@ -123,7 +123,7 @@ struct TodayView: View {
                     withAnimation {
                         context.insert(Habit(name: item.0, emoji: item.1, colorName: item.2, order: index))
                     }
-                    Haptics.added()
+                    Feedback.added()
                 } label: {
                     HStack {
                         EmojiIcon(emoji: item.1, size: 20)
@@ -146,6 +146,7 @@ struct HabitCard: View {
     let habit: Habit
     let onToggle: () -> Void
     @State private var floatingXP: Int?
+    @State private var shake = 0
 
     var body: some View {
         let done = habit.isDone()
@@ -154,6 +155,7 @@ struct HabitCard: View {
         Button {
             if !done {
                 floatingXP = habit.nextXP
+                shake += 1
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { floatingXP = nil }
             }
             onToggle()
@@ -206,6 +208,24 @@ struct HabitCard: View {
             .contentShape(PixelFrame())
         }
         .buttonStyle(PressableStyle(lip: done ? habit.color.opacity(0.5) : Color(white: 0.16)))
+        // Checking a habit: the card pops and wobbles.
+        .keyframeAnimator(initialValue: Wobble(), trigger: shake) { card, wobble in
+            card
+                .rotationEffect(.degrees(wobble.angle))
+                .scaleEffect(wobble.scale)
+        } keyframes: { _ in
+            KeyframeTrack(\.angle) {
+                CubicKeyframe(-3.5, duration: 0.07)
+                CubicKeyframe(3, duration: 0.08)
+                CubicKeyframe(-2, duration: 0.08)
+                CubicKeyframe(1, duration: 0.07)
+                CubicKeyframe(0, duration: 0.08)
+            }
+            KeyframeTrack(\.scale) {
+                SpringKeyframe(1.06, duration: 0.12, spring: .snappy)
+                SpringKeyframe(1, duration: 0.3, spring: .bouncy)
+            }
+        }
         .overlay(alignment: .topTrailing) {
             if let floatingXP {
                 Text("+\(floatingXP) XP")
@@ -223,6 +243,11 @@ struct HabitCard: View {
     }
 }
 
+private struct Wobble {
+    var angle = 0.0
+    var scale = 1.0
+}
+
 /// Square pixel checkbox; a pixel check mark pops in when done.
 struct PixelCheckbox: View {
     let done: Bool
@@ -235,7 +260,7 @@ struct PixelCheckbox: View {
                 PixelFrame(unit: 2).fill(Color(white: 0.11)).padding(3)
             } else {
                 PixelSprite(grid: PixelIcon.check, pixel: 1.5, tint: .white)
-                    .transition(.scale)
+                    .transition(.scale(scale: 0.2).animation(.spring(response: 0.3, dampingFraction: 0.45)))
             }
         }
         .frame(width: 30, height: 30)
@@ -283,7 +308,7 @@ struct PressableStyle: ButtonStyle {
             .padding(.bottom, depth)
             .animation(.spring(response: 0.15, dampingFraction: 0.7), value: configuration.isPressed)
             .onChange(of: configuration.isPressed) { _, pressed in
-                if pressed { Haptics.press() }
+                if pressed { Feedback.press() }
             }
     }
 }

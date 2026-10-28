@@ -200,7 +200,7 @@ struct DayEditor: View {
                         let done = habit.isDone(key)
                         Button {
                             withAnimation(.snappy) { habit.toggle(key) }
-                            if habit.isDone(key) { Haptics.check(combo: 1) } else { Haptics.uncheck() }
+                            if habit.isDone(key) { Feedback.check(combo: 1) } else { Feedback.uncheck() }
                         } label: {
                             HStack(spacing: 12) {
                                 EmojiIcon(emoji: habit.emoji, size: 22)

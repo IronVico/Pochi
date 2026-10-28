@@ -89,7 +89,7 @@ struct WorldView: View {
         .contentShape(.rect)
         .onTapGesture {
             pettedUntil = .now.addingTimeInterval(1.5)
-            Haptics.pet()
+            Feedback.pet()
         }
     }
 }

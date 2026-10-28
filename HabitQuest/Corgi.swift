@@ -231,7 +231,7 @@ struct PixelCorgi: View {
         .contentShape(.rect)
         .onTapGesture {
             excitedUntil = .now.addingTimeInterval(1.5)
-            Haptics.pet()
+            Feedback.pet()
             onTap()
         }
         .task {

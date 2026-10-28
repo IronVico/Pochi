@@ -251,7 +251,7 @@ struct PixelButtonStyle: ButtonStyle {
             .padding(.bottom, depth)
             .animation(.spring(response: 0.15, dampingFraction: 0.7), value: configuration.isPressed)
             .onChange(of: configuration.isPressed) { _, pressed in
-                if pressed { Haptics.press() }
+                if pressed { Feedback.press() }
             }
     }
 }
