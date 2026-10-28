@@ -82,9 +82,11 @@ struct RootView: View {
     }
 
     #if DEBUG
-    /// Launch with `-seedDemo` to replace the data with sample habits (simulator testing).
+    /// Launch with `-seedDemo` to replace the data with sample habits (simulator testing),
+    /// or `-seedNeglected` for the same habits abandoned for 4 days.
     private func seedDemoIfRequested() {
-        guard CommandLine.arguments.contains("-seedDemo") else { return }
+        let neglected = CommandLine.arguments.contains("-seedNeglected")
+        guard CommandLine.arguments.contains("-seedDemo") || neglected else { return }
         try? context.delete(model: Habit.self)
         let samples = [
             ("Boire 2L d'eau", "💧", "blue", 6), ("Faire du sport", "🏃", "orange", 2),
@@ -95,6 +97,8 @@ struct RootView: View {
             let habit = Habit(name: name, emoji: emoji, colorName: color, order: i)
             habit.createdAt = Day.offset(-30)
             habit.completedDays = (1...max(streak, 1)).map { Day.key(Day.offset(-$0)) }.filter { _ in streak > 0 }
+            // `-seedNeglected`: same history, but nothing done for the last 4 days.
+            if neglected { habit.completedDays = habit.completedDays.map { Day.key(Day.offset(-4, from: Day.date($0)!)) } }
             context.insert(habit)
         }
     }

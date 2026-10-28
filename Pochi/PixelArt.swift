@@ -111,6 +111,39 @@ enum PixelIcon {
         "....MMMM....",
     ]
 
+    static let bone = [
+        "........",
+        ".WW.....",
+        "WWWW....",
+        ".WWWW...",
+        "...WWWW.",
+        "....WWWW",
+        ".....WW.",
+        "........",
+    ]
+
+    static let heart = [
+        "........",
+        ".RR..RR.",
+        "RRRRRRRR",
+        "RRRRRRRR",
+        ".RRRRRR.",
+        "..RRRR..",
+        "...RR...",
+        "........",
+    ]
+
+    static let bolt = [
+        ".....YY.",
+        "....YY..",
+        "...YY...",
+        "..YYYYY.",
+        ".YYYYY..",
+        "...YY...",
+        "..YY....",
+        ".YY.....",
+    ]
+
     static let chart = [
         "............",
         ".........YY.",

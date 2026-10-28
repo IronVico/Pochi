@@ -7,6 +7,7 @@ struct TodayView: View {
     @State private var showAdd = false
     @State private var editing: Habit?
     @State private var nudge = 0
+    @State private var explainedNeed: CareNeed?
     @AppStorage(Sound.enabledKey) private var soundOn = true
 
     private static let suggestions: [(String, String, String)] = [
@@ -18,7 +19,8 @@ struct TodayView: View {
 
     var body: some View {
         let stats = GameStats(habits: habits)
-        let mood = CorgiMood(stats: stats)
+        let care = PochiCare(habits: habits)
+        let mood = CorgiMood(stats: stats, care: care)
 
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -67,6 +69,11 @@ struct TodayView: View {
                 .padding(.top, 26)
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: mood.pose)
 
+                if !habits.isEmpty {
+                    CareGauges(care: care) { explainedNeed = $0 }
+                        .padding(.top, 18)
+                }
+
                 // Habits
                 Text("HABITUDES")
                     .font(Theme.mono(24))
@@ -97,6 +104,11 @@ struct TodayView: View {
         }
         .scrollIndicators(.hidden)
         .background(Color.black)
+        .sheet(item: $explainedNeed) { need in
+            CareNeedSheet(need: need, value: need.value(in: care))
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Color(white: 0.08))
+        }
         .sheet(isPresented: $showAdd) {
             HabitEditor(habit: nil, nextOrder: (habits.map(\.order).max() ?? -1) + 1)
         }
@@ -338,6 +350,232 @@ struct WeekSquares: View {
                         if ago == 0 { Rectangle().stroke(habit.color, lineWidth: 1.5).padding(-3) }
                     }
                     .padding(.horizontal, ago == 0 ? 2 : 0)
+            }
+        }
+    }
+}
+
+// MARK: - Pochi's needs
+
+/// One of Pochi's three gauges (see PochiCare), with what the app tells you about it.
+enum CareNeed: String, Identifiable, CaseIterable {
+    case food, happiness, energy
+
+    var id: String { rawValue }
+
+    func value(in care: PochiCare) -> Double {
+        switch self {
+        case .food: care.food
+        case .happiness: care.happiness
+        case .energy: care.energy
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .food: "FAIM"
+        case .happiness: "MORAL"
+        case .energy: "ÉNERGIE"
+        }
+    }
+
+    var icon: [String] {
+        switch self {
+        case .food: PixelIcon.bone
+        case .happiness: PixelIcon.heart
+        case .energy: PixelIcon.bolt
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .food: Theme.accent
+        case .happiness: Color(red: 0.93, green: 0.42, blue: 0.5)
+        case .energy: Color(red: 1, green: 0.82, blue: 0.36)
+        }
+    }
+
+    var summary: String {
+        switch self {
+        case .food: "Sa gamelle. Elle se remplit à chaque habitude cochée."
+        case .happiness: "Son moral. Il suit la part de ta journée que tu termines."
+        case .energy: "Sa forme. Elle récompense la régularité, pas la quantité."
+        }
+    }
+
+    var rises: String {
+        switch self {
+        case .food: "+18 par habitude cochée."
+        case .happiness: "Jusqu'à +45 selon la part de ta journée faite. +15 pour une journée parfaite."
+        case .energy: "+25 dès que tu coches au moins une habitude dans la journée."
+        }
+    }
+
+    var drops: String {
+        switch self {
+        case .food: "−40 par jour. C'est la jauge qui se vide le plus vite."
+        case .happiness: "−25 par jour."
+        case .energy: "−22 par jour."
+        }
+    }
+
+    var tip: String {
+        switch self {
+        case .food: "Coche plusieurs habitudes par jour pour qu'il reste rassasié."
+        case .happiness: "Vise les journées parfaites : c'est ce qui le rend le plus heureux."
+        case .energy: "Une seule habitude par jour suffit à la garder haute. Ne saute pas de jour."
+        }
+    }
+}
+
+/// Hunger, happiness and energy, as small block bars. Tap one to learn how it works.
+struct CareGauges: View {
+    let care: PochiCare
+    let onSelect: (CareNeed) -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(CareNeed.allCases) { need in
+                Button { onSelect(need) } label: {
+                    Gauge(need: need, value: need.value(in: care))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private struct Gauge: View {
+        let need: CareNeed
+        let value: Double
+
+        private static let blocks = 5
+
+        var body: some View {
+            let filled = Int((value / 100 * Double(Self.blocks)).rounded(.up))
+            let low = value < 25
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    PixelSprite(grid: need.icon, pixel: 2)
+                    Text(need.label)
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .tracking(1)
+                        .foregroundStyle(low ? Theme.accent : .secondary)
+                }
+                HStack(spacing: 2) {
+                    ForEach(0..<Self.blocks, id: \.self) { i in
+                        Rectangle()
+                            .fill(i < filled ? need.color : Color(white: 0.18))
+                            .frame(height: 8)
+                    }
+                }
+                .animation(.snappy, value: filled)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .pixelPanel()
+            .opacity(low ? 0.85 : 1)
+            .contentShape(.rect)
+        }
+    }
+}
+
+/// Bottom sheet explaining one gauge: where it stands, what fills it, what empties it.
+/// Sized to its content, so every gauge's sheet is just as tall as it needs.
+struct CareNeedSheet: View {
+    let need: CareNeed
+    let value: Double
+
+    @State private var height: CGFloat = 400
+
+    private var state: String {
+        switch value {
+        case 70...: "Au top"
+        case 40..<70: "Ça va"
+        case 25..<40: "Bas"
+        default: "Critique"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 14) {
+                PixelSprite(grid: need.icon, pixel: 5)
+                    .frame(width: 56, height: 56)
+                    .background(PixelFrame().fill(need.color.opacity(0.18)))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(need.label)
+                        .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                        .tracking(2)
+                    Text(need.summary)
+                        .font(.system(size: 16))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Maintenant")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.7))
+                    Spacer()
+                    Text("\(state) · \(Int(value.rounded()))/100")
+                        .font(.system(size: 15, weight: .bold, design: .monospaced))
+                        .foregroundStyle(value < 25 ? Theme.accent : .white)
+                }
+                PixelBlocksBar(filled: Int((value / 10).rounded(.up)), total: 10, color: need.color)
+            }
+            .padding(14)
+            .pixelPanel()
+
+            VStack(alignment: .leading, spacing: 16) {
+                Row(symbol: "arrow.up", title: "ÇA MONTE", text: need.rises, color: need.color)
+                Row(symbol: "arrow.down", title: "ÇA BAISSE", text: need.drops, color: need.color)
+                Row(symbol: "lightbulb.fill", title: "ASTUCE", text: need.tip, color: need.color)
+            }
+
+            HStack(alignment: .top, spacing: 12) {
+                PixelSprite(grid: PixelIcon.heart, pixel: 2)
+                    .padding(.top, 3)
+                Text("Si ses jauges sont trop basses et que rien n'est coché, Pochi boude. Une seule habitude cochée suffit à le consoler.")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .pixelPanel(fill: Color(white: 0.13))
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 32)
+        .padding(.bottom, 16)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        .presentationDetents([.height(height)])
+    }
+
+    private struct Row: View {
+        let symbol: String
+        let title: String
+        let text: String
+        let color: Color
+
+        var body: some View {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: symbol)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(color)
+                    .frame(width: 20)
+                    .padding(.top, 1)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .heavy, design: .monospaced))
+                        .foregroundStyle(color)
+                    Text(text)
+                        .font(.system(size: 16))
+                        .foregroundStyle(.white)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }

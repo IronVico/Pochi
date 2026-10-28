@@ -5,7 +5,9 @@ import SwiftUI
 /// Pochi, the corgi from the portfolio (portfolio/src/components/pochi/PochiSprite.tsx),
 /// adapted into one pose per mood.
 enum CorgiPose {
-    case box, sleeping, phone, lying, standing, happy
+    case box, sleeping, phone, sitting, standing, happy
+    /// Neglected: curled up, sulking under a little rain cloud.
+    case sulking
 }
 
 private struct Pixel {
@@ -49,8 +51,68 @@ private enum Pochi {
         "....KKKKKKK.....KKKKKKK.",
     ]
 
-    /// Same Pochi with the legs tucked under: belly on the floor.
-    static let lying = Array(standing.prefix(13)) + ["....KKKKKKKKKKKKKKKKKKK."]
+    // The next three poses come from the portfolio (src/components/pochi/PochiSprite.tsx).
+
+    /// Sitting: same head, rounded back down to the rear, hind leg in front.
+    static let sit = [
+        "..KK......KK............",
+        ".KOOK....KOOK...........",
+        ".KOPOK..KOPOK...........",
+        ".KOPPOKKOPPOK...........",
+        "KOOOOOWWOOOOOKK.........",
+        "KOOKOOWWOOKOOOOK........",
+        "KOOKOWWWWOKOOOOOK.......",
+        "KOOWWWNNWWWOOOOOOK......",
+        ".KOWWWWWWWWOOOOOOOK.....",
+        "..KWWWWWWWKOOOOODOOK....",
+        "...KWWWWWWOOOOODOOODK...",
+        "...KWWWWWWOOOODOOOODK...",
+        "....KWWWWKOOOODOOODDK...",
+        "....KWWKSSKOOOOOODDDK...",
+        "....KWWKSSKWWWKDDDDK....",
+        "....KKKKKKKKKKKKKKKK....",
+    ]
+
+    /// Begging: up on its hind legs, front paws folded on its chest. 19 rows, drawn 3 higher.
+    static let beg = [
+        "..KK......KK............",
+        ".KOOK....KOOK...........",
+        ".KOPOK..KOPOK...........",
+        ".KOPPOKKOPPOK...........",
+        "KOOOOOWWOOOOOK..........",
+        "KOOKOOWWOOKOOK..........",
+        "KOOKOWWWWOKOOK..........",
+        "KOOWWWNNWWWOOK..........",
+        ".KOWWWWWWWWOOK..........",
+        "..KWWWWWWWWOOK..........",
+        "KKKWWWWWWWOOOOK.........",
+        "KWWKWWWWWWOOOOK.........",
+        "KKKKWWWWWWOOOOK.........",
+        ".KSSKWWWWWOOOOK.........",
+        ".KKKKWWWWOOOODK.........",
+        "...KWWWWOOOODDK.........",
+        "...KWWWOOOODDDK.........",
+        "...KWWKDDDDKWWK.........",
+        "..KKKKKK..KKKKK.........",
+    ]
+    static let begRise = 3
+
+    /// Napping: lying down, head on its front paws, eyes shut (drawn in the grid).
+    static let nap = [
+        "..KK......KK............",
+        ".KOOK....KOOK...........",
+        ".KOPOK..KOPOK...........",
+        ".KOPPOKKOPPOK...........",
+        "KOOOOOWWOOOOOKKKKKKKK...",
+        "KOOOOOWWOOOOOOOOOOOOOK..",
+        "KOOKOWWWWOKOOOOOOOOOOOK.",
+        "KOOWWWNNWWWOOOOOOOOOODDK",
+        ".KOWWWWWWWWOOOOOOOOODDDK",
+        "KWWWKWWWWKWWWWWWWWWDDDK.",
+        "KKKKKKKKKKKKKKKKKKKKKKK.",
+    ]
+    /// Breathing in: the back rises by one pixel.
+    static let breath = (14...20).map { Pixel(x: $0, y: 3, c: "K") } + (14...20).map { Pixel(x: $0, y: 4, c: "O") }
 
     /// Sitting upright, three-quarters: big head, small body, tail plume on the side.
     static let sitting = [
@@ -138,8 +200,10 @@ struct PixelCorgi: View {
     @State private var excitedUntil = Date.distantPast
 
     var pixel: CGFloat = 3
-    /// 30 × 16: Pochi is 24 wide, the extra room in front of it is for the phone.
+    /// 30 × 19: Pochi is 24 wide, the extra room in front of it is for the phone,
+    /// and the top 3 rows are for when it stands up on its hind legs.
     private static let width = 30
+    private static let height = 19
     private static let frame: Duration = .milliseconds(70)
 
     private var excited: Bool { pose == .happy || excitedUntil > .now }
@@ -179,14 +243,27 @@ struct PixelCorgi: View {
                 Layer(pixels: screen, x: 11, y: 11),
                 Layer(pixels: paws, x: 7, y: 0),
             ]
-        case .sleeping, .lying, .standing, .happy:
-            let standing = pose == .standing || pose == .happy
-            let y = standing ? 0 : 2
+        case .sulking:
+            return [Layer(grid: Pochi.nap, y: 5)]
+        case .sleeping:
+            var layers = [Layer(grid: Pochi.nap, y: 5)]
+            if (tick / 14) % 2 == 0 { layers.append(Layer(pixels: Pochi.breath, y: 5)) }
+            return layers
+        case .sitting:
+            var layers = [Layer(grid: Pochi.sit)]
+            if excited { layers.append(Layer(pixels: Pochi.tongue)) }
+            if eyesClosed { layers.append(Layer(pixels: Pochi.blink)) }
+            return layers
+        case .happy:
+            let y = -Pochi.begRise
+            return [Layer(grid: Pochi.beg, y: y), Layer(pixels: Pochi.tongue, y: y)]
+                + (eyesClosed ? [Layer(pixels: Pochi.blink, y: y)] : [])
+        case .standing:
             var layers: [Layer] = []
-            if tailUp && pose != .sleeping { layers.append(Layer(pixels: Pochi.tail, y: y)) }
-            layers.append(Layer(grid: standing ? Pochi.standing : Pochi.lying, y: y))
-            if excited { layers.append(Layer(pixels: Pochi.tongue, y: y)) }
-            if eyesClosed { layers.append(Layer(pixels: Pochi.blink, y: y)) }
+            if tailUp { layers.append(Layer(pixels: Pochi.tail)) }
+            layers.append(Layer(grid: Pochi.standing))
+            if excited { layers.append(Layer(pixels: Pochi.tongue)) }
+            if eyesClosed { layers.append(Layer(pixels: Pochi.blink)) }
             return layers
         }
     }
@@ -195,7 +272,7 @@ struct PixelCorgi: View {
         let p = pixel
         // Pushed against the right edge, next to the speech bubble.
         let shift = 6
-        let layers = layers.map { Layer(grid: $0.grid, pixels: $0.pixels, x: $0.x + shift, y: $0.y) }
+        let layers = layers.map { Layer(grid: $0.grid, pixels: $0.pixels, x: $0.x + shift, y: $0.y + Pochi.begRise) }
         let hop = excited && pose != .box && (tick / 3) % 2 == 0
 
         Canvas { ctx, _ in
@@ -207,7 +284,7 @@ struct PixelCorgi: View {
             }
             if pose == .phone {
                 // Blue glow of the screen on Pochi's face.
-                let center = CGPoint(x: 18 * p, y: 9 * p)
+                let center = CGPoint(x: 18 * p, y: 12 * p)
                 ctx.fill(Path(ellipseIn: CGRect(x: center.x - 6 * p, y: center.y - 6 * p, width: 12 * p, height: 12 * p)),
                          with: .radialGradient(Gradient(colors: [Color(hex: 0x7CC4FF).opacity(0.4), .clear]),
                                                center: center, startRadius: 0, endRadius: 6 * p))
@@ -219,11 +296,12 @@ struct PixelCorgi: View {
                 for px in layer.pixels { fill(layer.x + px.x, layer.y + px.y, px.c) }
             }
         }
-        .frame(width: CGFloat(Self.width) * p, height: 16 * p)
+        .frame(width: CGFloat(Self.width) * p, height: CGFloat(Self.height) * p)
         .offset(y: hop ? -p : 0)
         .overlay(alignment: .topLeading) {
             switch pose {
-            case .sleeping: Zzz().offset(x: 20 * p, y: -2 * p)
+            case .sleeping: Zzz().offset(x: 20 * p, y: 4 * p)
+            case .sulking: RainCloud(pixel: p).offset(x: 6 * p, y: 0)
             case .happy: Hearts().offset(x: 12 * p, y: -p)
             default: EmptyView()
             }
@@ -271,6 +349,35 @@ private struct Zzz: View {
             }
             .foregroundStyle(.secondary)
         } animation: { _ in .easeInOut(duration: 0.6) }
+    }
+}
+
+/// A small grey cloud with rain falling, over a sulking Pochi.
+private struct RainCloud: View {
+    let pixel: CGFloat
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.15)) { timeline in
+            let frame = Int(timeline.date.timeIntervalSinceReferenceDate / 0.15)
+            Canvas { ctx, _ in
+                let p = pixel
+                func px(_ x: Int, _ y: Int, _ color: Color) {
+                    ctx.fill(Path(CGRect(x: CGFloat(x) * p, y: CGFloat(y) * p, width: p + 0.1, height: p + 0.1)),
+                             with: .color(color))
+                }
+                let cloud = Color(white: 0.55), dark = Color(white: 0.4)
+                for x in 3...8 { px(x, 0, cloud) }
+                for x in 1...10 { px(x, 1, cloud) }
+                for x in 0...11 { px(x, 2, cloud) }
+                for x in 1...10 { px(x, 3, dark) }
+                // Drops falling in staggered columns.
+                for (i, x) in [2, 5, 8, 10].enumerated() {
+                    let y = 5 + (frame + i * 2) % 5
+                    px(x, y, Color(red: 0.55, green: 0.75, blue: 1))
+                }
+            }
+            .frame(width: 12 * pixel, height: 10 * pixel)
+        }
     }
 }
 
@@ -353,9 +460,14 @@ struct SpeechBubble: View {
 
 enum CorgiMood {
     case empty, nothing, started, halfway, perfect
+    /// Neglected for days: the gauges are low.
+    case sulking
 
-    init(stats: GameStats) {
+    init(stats: GameStats, care: PochiCare) {
         if stats.habitCount == 0 { self = .empty; return }
+        // Low gauges and nothing done yet today: it sulks. One check-in is enough to cheer it up;
+        // the gauges themselves take a few good days to fill back up.
+        if care.health < PochiCare.sulkThreshold && stats.todayDone == 0 { self = .sulking; return }
         let ratio = Double(stats.todayDone) / Double(stats.habitCount)
         switch ratio {
         case 0: self = .nothing
@@ -393,6 +505,13 @@ enum CorgiMood {
             "Tu y es presque. Ne gâche pas tout, pour une fois.",
             "J'en déduis une chose : tu as une volonté. Possiblement.",
         ]
+        case .sulking: [
+            "Je mange plus. Je regarde le mur. Merci.",
+            "Ma gamelle est vide. Comme mes espoirs.",
+            "Ça fait des jours. Je commence à oublier ta tête.",
+            "Je boude. Coche un truc et j'y réfléchirai.",
+            "Il pleut. Juste au-dessus de moi. Évidemment.",
+        ]
         case .perfect: [
             "Tout coché. Je suppose que je dois applaudir. Sans mains.",
             "Journée parfaite. Profites-en, ça n'arrivera plus.",
@@ -409,9 +528,10 @@ enum CorgiMood {
             // Doomscrolling by day, asleep at night.
             let hour = Day.calendar.component(.hour, from: .now)
             return hour >= 22 || hour < 7 ? .sleeping : .phone
-        case .started: return .lying
+        case .started: return .sitting
         case .halfway: return .standing
         case .perfect: return .happy
+        case .sulking: return .sulking
         }
     }
 
@@ -428,7 +548,7 @@ enum CorgiMood {
 /// Every pose side by side. Launch with `-corgiGallery` to see it.
 struct CorgiGallery: View {
     private let poses: [(CorgiPose, String)] = [
-        (.box, "BOX"), (.sleeping, "SLEEPING"), (.phone, "PHONE"), (.lying, "LYING"), (.standing, "STANDING"), (.happy, "HAPPY"),
+        (.box, "BOX"), (.sleeping, "SLEEPING"), (.phone, "PHONE"), (.sitting, "SITTING"), (.sulking, "SULKING"), (.standing, "STANDING"), (.happy, "HAPPY"),
     ]
 
     var body: some View {

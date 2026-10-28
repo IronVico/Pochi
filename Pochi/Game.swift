@@ -89,3 +89,46 @@ enum Construction {
     static func step(at level: Int) -> BuildStep? { steps.first { $0.level == level } }
     static func next(after level: Int) -> BuildStep? { steps.first { $0.level > level } }
 }
+
+/// Pochi's needs, Tamagotchi-style. Computed by replaying the recent history day by day,
+/// so nothing extra is stored: every gauge drops on its own and your habits fill it back up.
+struct PochiCare {
+    /// Filled by every check-in, drops fastest.
+    var food = 70.0
+    /// Filled by finishing your day (bonus for a perfect day).
+    var happiness = 70.0
+    /// Filled by showing up: at least one check-in in the day.
+    var energy = 70.0
+
+    var health: Double { (food + happiness + energy) / 3 }
+    /// Below this, Pochi sulks.
+    static let sulkThreshold = 30.0
+
+    init(habits: [Habit], now: Date = .now) {
+        guard let created = habits.map(\.createdAt).min() else { return }
+        let calendar = Day.calendar
+        let today = calendar.startOfDay(for: now)
+        // A month of history is plenty: older days no longer show in the gauges.
+        var day = max(calendar.startOfDay(for: created), Day.offset(-30, from: today))
+        let todayKey = Day.key(now)
+
+        while true {
+            let key = Day.key(day)
+            let isToday = key == todayKey
+            // Today only counts the part of the day already gone: gauges drop through the day.
+            let elapsed = isToday ? now.timeIntervalSince(today) / 86_400 : 1
+            let active = habits.filter { Day.key($0.createdAt) <= key }
+            let done = active.filter { $0.isDone(key) }.count
+            let ratio = active.isEmpty ? 0 : Double(done) / Double(active.count)
+
+            food = Self.clamp(food - 40 * elapsed + 18 * Double(done))
+            energy = Self.clamp(energy - 22 * elapsed + (done > 0 ? 25 : 0))
+            happiness = Self.clamp(happiness - 25 * elapsed + 45 * ratio + (ratio == 1 ? 15 : 0))
+
+            if isToday || key > todayKey { break }
+            day = Day.offset(1, from: day)
+        }
+    }
+
+    private static func clamp(_ value: Double) -> Double { min(max(value, 0), 100) }
+}

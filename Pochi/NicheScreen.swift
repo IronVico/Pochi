@@ -7,7 +7,8 @@ struct NicheScreen: View {
 
     var body: some View {
         let stats = GameStats(habits: habits)
-        let mood = CorgiMood(stats: stats)
+        let care = PochiCare(habits: habits)
+        let mood = CorgiMood(stats: stats, care: care)
 
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -15,7 +16,7 @@ struct NicheScreen: View {
                     .font(.system(size: 40, weight: .bold))
                     .padding(.top, 60)
 
-                WorldView(level: stats.level, trees: stats.perfectDays, pose: mood.pose)
+                WorldView(level: stats.level, trees: stats.perfectDays, pose: mood.pose, fed: care.food >= 35)
                     .padding(.top, 24)
 
                 NextStepPanel(stats: stats)
@@ -59,6 +60,9 @@ struct WorldView: View {
     let level: Int
     let trees: Int
     let pose: CorgiPose
+    var fed = true
+    /// Time of day; nil follows the clock (re-read on every frame, so it changes on its own).
+    var phase: IsoWorld.Phase?
 
     @State private var pettedUntil = Date.distantPast
 
@@ -66,17 +70,19 @@ struct WorldView: View {
         if pettedUntil > .now { return .happy }
         switch pose {
         case .box, .standing: return .standing
-        case .lying: return .lying
+        case .sitting: return .sitting
         case .sleeping: return .sleeping
         case .phone: return .phone
         case .happy: return .happy
+        case .sulking: return .sulking
         }
     }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.14)) { timeline in
             let frame = Int(timeline.date.timeIntervalSinceReferenceDate / 0.14)
-            if let image = IsoWorld.render(level: level, trees: trees, pochi: pochi, frame: frame) {
+            if let image = IsoWorld.render(level: level, trees: trees, pochi: pochi, wander: pettedUntil <= .now, fed: fed,
+                                              phase: phase ?? .current, frame: frame) {
                 Image(decorative: image, scale: 1)
                     .interpolation(.none)
                     .resizable()
@@ -151,11 +157,23 @@ struct BuildStepRow: View {
 }
 
 #if DEBUG
-/// Every construction stage, with more and more trees. Launch with `-nicheGallery`.
+/// The four times of day, Pochi's moods, then every construction stage. Launch with `-nicheGallery`.
 struct NicheGallery: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
+                ForEach(Array(IsoWorld.Phase.allCases.enumerated()), id: \.offset) { _, phase in
+                    VStack(spacing: 4) {
+                        WorldView(level: 10, trees: 12, pose: .standing, phase: phase)
+                        Text("\(phase)".uppercased()).font(Theme.mono(11)).foregroundStyle(.secondary)
+                    }
+                }
+                ForEach(Array([CorgiPose.phone, .sleeping, .sitting, .happy, .sulking].enumerated()), id: \.offset) { _, pose in
+                    VStack(spacing: 4) {
+                        WorldView(level: 4, trees: 3, pose: pose, phase: .day)
+                        Text("\(pose)".uppercased()).font(Theme.mono(11)).foregroundStyle(.secondary)
+                    }
+                }
                 ForEach(1...10, id: \.self) { level in
                     VStack(spacing: 4) {
                         WorldView(level: level, trees: level + 1, pose: .standing)
