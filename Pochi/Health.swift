@@ -54,6 +54,14 @@ final class Health {
     }
 
     func refresh() async {
+        #if DEBUG
+        // The simulator has no Health data: `-fakeHealth` shows sample numbers instead.
+        if ProcessInfo.processInfo.arguments.contains("-fakeHealth") {
+            isConnected = true
+            today = HealthDay(steps: 8432, exerciseMinutes: 34, workouts: 1, sleepHours: 7.25, mindfulMinutes: 10)
+            return
+        }
+        #endif
         guard isAvailable, isConnected else { return }
         isLoading = true
         defer { isLoading = false }

@@ -96,6 +96,8 @@ struct SettingsSheet: View {
         .padding(.horizontal, 24)
         .padding(.top, 28)
         .padding(.bottom, 16)
+        // Measure the natural height, not the one the current detent squeezes it into.
+        .fixedSize(horizontal: false, vertical: true)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         .presentationDetents([.height(height)])
         .presentationDragIndicator(.visible)
