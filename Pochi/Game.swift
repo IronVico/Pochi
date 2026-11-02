@@ -104,7 +104,8 @@ struct PochiCare {
     /// Below this, Pochi sulks.
     static let sulkThreshold = 30.0
 
-    init(habits: [Habit], now: Date = .now) {
+    /// `health` is today's Apple Health data, when connected: it nudges today's energy.
+    init(habits: [Habit], health: HealthDay? = nil, now: Date = .now) {
         guard let created = habits.map(\.createdAt).min() else { return }
         let calendar = Day.calendar
         let today = calendar.startOfDay(for: now)
@@ -128,6 +129,21 @@ struct PochiCare {
             if isToday || key > todayKey { break }
             day = Day.offset(1, from: day)
         }
+
+        if let health { energy = Self.clamp(energy + Self.energyBonus(health)) }
+    }
+
+    /// Slept well: +15, slept under 6 h: −10, active day (8,000 steps or a workout): +10.
+    /// No sleep data counts as neither.
+    static func energyBonus(_ health: HealthDay) -> Double {
+        var bonus = 0.0
+        if health.sleepHours >= 7 {
+            bonus += 15
+        } else if health.sleepHours > 0, health.sleepHours < 6 {
+            bonus -= 10
+        }
+        if health.steps >= 8000 || health.workouts > 0 { bonus += 10 }
+        return bonus
     }
 
     private static func clamp(_ value: Double) -> Double { min(max(value, 0), 100) }

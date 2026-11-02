@@ -7,7 +7,7 @@ struct NicheScreen: View {
 
     var body: some View {
         let stats = GameStats(habits: habits)
-        let care = PochiCare(habits: habits)
+        let care = PochiCare(habits: habits, health: Health.shared.today)
         let mood = CorgiMood(stats: stats, care: care)
 
         ScrollView {

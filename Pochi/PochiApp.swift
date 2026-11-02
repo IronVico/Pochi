@@ -29,6 +29,7 @@ struct RootView: View {
     @State private var confetti = 0
     @State private var levelUp: Int?
     @AppStorage(Appearance.key) private var appearance = Appearance.system
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         let stats = GameStats(habits: habits)
@@ -52,6 +53,10 @@ struct RootView: View {
         }
         .tint(Theme.accent)
         .onChange(of: appearance, initial: true) { _, appearance in appearance.apply() }
+        // Health data moves through the day (steps): reread it whenever the app comes back.
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase == .active { Task { await Health.shared.refresh() } }
+        }
         .overlay {
             ConfettiView(trigger: confetti)
                 .allowsHitTesting(false)

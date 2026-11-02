@@ -20,7 +20,7 @@ struct TodayView: View {
 
     var body: some View {
         let stats = GameStats(habits: habits)
-        let care = PochiCare(habits: habits)
+        let care = PochiCare(habits: habits, health: Health.shared.today)
         let mood = CorgiMood(stats: stats, care: care)
 
         ScrollView {
@@ -541,6 +541,9 @@ struct CareNeedSheet: View {
             VStack(alignment: .leading, spacing: 16) {
                 Row(symbol: "arrow.up", title: "ÇA MONTE", text: need.rises, color: need.color)
                 Row(symbol: "arrow.down", title: "ÇA BAISSE", text: need.drops, color: need.color)
+                if need == .energy, let health = Health.shared.today {
+                    Row(symbol: "heart.fill", title: "SANTÉ", text: Self.healthText(health), color: need.color)
+                }
                 Row(symbol: "lightbulb.fill", title: "ASTUCE", text: need.tip, color: need.color)
             }
 
@@ -562,6 +565,12 @@ struct CareNeedSheet: View {
         .padding(.bottom, 16)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         .presentationDetents([.height(height)])
+    }
+
+    private static func healthText(_ health: HealthDay) -> String {
+        let bonus = Int(PochiCare.energyBonus(health))
+        let today = bonus == 0 ? "rien aujourd'hui" : "\(bonus > 0 ? "+" : "−")\(abs(bonus)) aujourd'hui"
+        return "Dormir 7 h ou plus : +15, moins de 6 h : −10. 8 000 pas ou une séance : +10. Pour toi : \(today)."
     }
 
     private struct Row: View {
