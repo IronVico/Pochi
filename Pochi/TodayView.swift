@@ -133,6 +133,21 @@ struct TodayView: View {
         .sheet(item: $editing) { habit in
             HabitEditor(habit: habit, nextOrder: habit.order)
         }
+        // New Health numbers, or a habit newly linked: check what reached its goal.
+        .onChange(of: healthSignature, initial: true) { checkHealthGoals() }
+    }
+
+    private var healthSignature: String {
+        let today = Health.shared.today.map { "\($0)" } ?? ""
+        return today + habits.map { "\($0.healthMetric ?? "")\($0.healthGoal)" }.joined()
+    }
+
+    /// Checks habits whose Health goal is reached. Never unchecks: a hand check stays.
+    private func checkHealthGoals() {
+        let today = Health.shared.today
+        for habit in habits where !habit.isDone() && habit.reachedGoal(in: today) {
+            toggle(habit)
+        }
     }
 
     private func toggle(_ habit: Habit) {
@@ -195,6 +210,15 @@ struct HabitCard: View {
     @State private var floatingXP: Int?
     @State private var shake = 0
 
+    /// Linked to Health: today's progress toward the goal, otherwise the XP it gives.
+    private func status(done: Bool) -> String {
+        if done { return "VALIDÉ" }
+        if let metric = habit.metric, let today = Health.shared.today {
+            return metric.progress(metric.value(in: today), goal: habit.healthGoal)
+        }
+        return "+\(habit.nextXP) XP"
+    }
+
     var body: some View {
         let done = habit.isDone()
         let streak = habit.currentStreak
@@ -232,8 +256,10 @@ struct HabitCard: View {
                         Text("\(streak)").contentTransition(.numericText())
                     }
                     .foregroundStyle(streak > 0 ? ink : ink.opacity(0.45))
-                    Text(done ? "VALIDÉ" : "+\(habit.nextXP) XP")
+                    Text(status(done: done))
                         .foregroundStyle(ink.opacity(0.55))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .padding(.top, 6)

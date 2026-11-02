@@ -34,6 +34,10 @@ final class Habit {
     var createdAt: Date
     var order: Int
     var completedDays: [String]
+    /// Apple Health data that checks this habit by itself (`HealthMetric` raw value), if any.
+    var healthMetric: String? = nil
+    /// Value to reach in `healthMetric`, in its unit.
+    var healthGoal: Double = 0
 
     init(name: String, emoji: String, colorName: String, order: Int) {
         self.name = name
@@ -45,6 +49,14 @@ final class Habit {
     }
 
     var color: Color { HabitColor.color(colorName) }
+
+    var metric: HealthMetric? { healthMetric.flatMap(HealthMetric.init(rawValue:)) }
+
+    /// True when today's Health data reaches the goal.
+    func reachedGoal(in day: HealthDay?) -> Bool {
+        guard let metric, let day, healthGoal > 0 else { return false }
+        return metric.value(in: day) >= healthGoal
+    }
 
     func isDone(_ key: String = Day.key()) -> Bool { completedDays.contains(key) }
 

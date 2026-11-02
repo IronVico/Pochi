@@ -107,6 +107,17 @@ struct RootView: View {
             if neglected { habit.completedDays = habit.completedDays.map { Day.key(Day.offset(-4, from: Day.date($0)!)) } }
             context.insert(habit)
         }
+        // Linked to Health (try with `-fakeHealth`): sleep is reached and checks itself, steps aren't yet.
+        let linked: [(String, String, HealthMetric, Double)] = [
+            ("10K pas", "🏃", .steps, 10_000), ("Dormir 7 h", "😴", .sleep, 7),
+        ]
+        for (i, (name, emoji, metric, goal)) in linked.enumerated() {
+            let habit = Habit(name: name, emoji: emoji, colorName: "green", order: samples.count + i)
+            habit.createdAt = Day.offset(-30)
+            habit.healthMetric = metric.rawValue
+            habit.healthGoal = goal
+            context.insert(habit)
+        }
     }
     #endif
 }

@@ -11,7 +11,72 @@ struct HealthDay: Equatable {
     var mindfulMinutes = 0
 }
 
-/// The link to Apple Health. Not used by the game yet: it only fetches today's numbers.
+/// A Health number a habit can be linked to, so it checks itself.
+enum HealthMetric: String, CaseIterable, Identifiable {
+    case steps, exercise, workouts, sleep, mindful
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .steps: "Pas"
+        case .exercise: "Exercice"
+        case .workouts: "Séances de sport"
+        case .sleep: "Sommeil"
+        case .mindful: "Pleine conscience"
+        }
+    }
+
+    var unit: String {
+        switch self {
+        case .steps: "pas"
+        case .exercise, .mindful: "min"
+        case .workouts: "séance"
+        case .sleep: "h"
+        }
+    }
+
+    var defaultGoal: Double {
+        switch self {
+        case .steps: 10_000
+        case .exercise: 30
+        case .workouts: 1
+        case .sleep: 7
+        case .mindful: 10
+        }
+    }
+
+    func value(in day: HealthDay) -> Double {
+        switch self {
+        case .steps: Double(day.steps)
+        case .exercise: Double(day.exerciseMinutes)
+        case .workouts: Double(day.workouts)
+        case .sleep: day.sleepHours
+        case .mindful: Double(day.mindfulMinutes)
+        }
+    }
+
+    /// "6,4k/10k pas", "6h30/7h": short enough for a half-width card.
+    func progress(_ value: Double, goal: Double) -> String {
+        switch self {
+        case .steps: "\(Self.compact(value))/\(Self.compact(goal)) pas"
+        case .sleep: "\(Self.hours(value))/\(Self.hours(goal))"
+        default: "\(Int(value))/\(Int(goal)) \(unit)"
+        }
+    }
+
+    private static func compact(_ value: Double) -> String {
+        guard value >= 1000 else { return "\(Int(value))" }
+        return (value / 1000).formatted(.number.precision(.fractionLength(0...1)).locale(Locale(identifier: "fr_FR"))) + "k"
+    }
+
+    private static func hours(_ value: Double) -> String {
+        let minutes = Int((value * 60).rounded())
+        return minutes % 60 == 0 ? "\(minutes / 60)h" : "\(minutes / 60)h\(String(format: "%02d", minutes % 60))"
+    }
+}
+
+/// The link to Apple Health: fetches today's numbers.
 @MainActor @Observable
 final class Health {
     static let shared = Health()
