@@ -4,7 +4,17 @@ import SwiftUI
 
 /// Pochi's pose, which follows your day.
 enum CorgiPose {
-    case box, sleeping, phone, sitting, standing, happy
+    case box, sleeping, phone, sitting, happy
+    /// Rolled up in a plaid, only the head and paws sticking out.
+    case blanket
+    /// Sitting with a tennis ball between its paws.
+    case ball
+    /// Munching from its bowl.
+    case bowl
+    /// Sitting in a beanie and scarf, for winter.
+    case scarf
+    /// Asleep in a wicker basket.
+    case basket
     /// Neglected: lying down, sulking under a little rain cloud.
     case sulking
 }
@@ -38,6 +48,7 @@ struct PochiView: View {
             let s = size / 100
             switch pose {
             case .sleeping: Zzz(size: size).offset(x: 78 * s, y: 18 * s)
+            case .basket: Zzz(size: size).offset(x: 80 * s, y: 14 * s)
             case .sulking: RainCloud(size: size).offset(x: 18 * s, y: -6 * s)
             case .happy: Hearts(size: size).offset(x: 54 * s, y: 4 * s)
             default: EmptyView()
@@ -69,6 +80,10 @@ private struct CorgiDrawing {
     let blink: Bool
 
     static let fur = Color(hex: 0xF0A04B)
+    static let tennis = Color(hex: 0xD8E85A)
+    static let kibble = Color(hex: 0xA8642B)
+    static let wicker = Color(hex: 0xD49A5C)
+    static let wickerShadow = Color(hex: 0xA8703C)
     static let cream = Color(hex: 0xFFFBF2)
     static let blush = Color(hex: 0xF4A3A3)
     static let cardboard = Color(hex: 0xDDA867)
@@ -78,8 +93,8 @@ private struct CorgiDrawing {
 
     private var eyes: Eyes {
         switch pose {
-        case .sleeping: .closed
-        case .happy: .happy
+        case .sleeping, .basket: .closed
+        case .happy, .bowl: .happy
         case .phone: .half
         case .sulking: .sad
         default: blink ? .closed : (excited ? .happy : .open)
@@ -89,7 +104,7 @@ private struct CorgiDrawing {
     private var lying: Bool { pose == .sleeping || pose == .sulking }
 
     func draw(in ctx: GraphicsContext) {
-        let wag = excited ? sin(time * 18) * 0.5 : sin(time * 2.5) * 0.18
+        let wag = excited || pose == .ball ? sin(time * 18) * 0.5 : sin(time * 2.5) * 0.18
         switch pose {
         case .box:
             let peek = (sin(time * 1.6) + 1) * 3
@@ -105,6 +120,29 @@ private struct CorgiDrawing {
             head(ctx, center: CGPoint(x: 44, y: 62), tilt: pose == .sleeping ? -0.12 : 0.06)
             paw(ctx, CGPoint(x: 30, y: 92), rx: 9, ry: 5)
             paw(ctx, CGPoint(x: 52, y: 93), rx: 9, ry: 5)
+        case .bowl:
+            let chew = abs(sin(time * 7)) * 1.5
+            tail(ctx, base: CGPoint(x: 84, y: 74), angle: -0.5 + wag)
+            outlined(ctx, oval(60, 75, 29, 21), Self.fur)
+            ctx.fill(oval(60, 77, 15, 15), with: .color(Self.cream))
+            head(ctx, center: CGPoint(x: 60, y: 45 + chew))
+            bowl(ctx)
+            paw(ctx, CGPoint(x: 36, y: 94), rx: 8, ry: 5)
+            paw(ctx, CGPoint(x: 84, y: 94), rx: 8, ry: 5)
+        case .basket:
+            let breath = sin(time * 2) * 0.8
+            ctx.fill(oval(60, 66, 42, 9), with: .color(Self.wickerShadow))
+            tail(ctx, base: CGPoint(x: 88, y: 64), angle: -0.4)
+            head(ctx, center: CGPoint(x: 56, y: 45 + breath), tilt: -0.12)
+            basket(ctx)
+            paw(ctx, CGPoint(x: 44, y: 64), rx: 7, ry: 4.5)
+            paw(ctx, CGPoint(x: 62, y: 65), rx: 7, ry: 4.5)
+        case .blanket:
+            let breath = sin(time * 2) * 0.8
+            head(ctx, center: CGPoint(x: 60, y: 39 - breath), tilt: excited ? sin(time * 9) * 0.06 : 0)
+            blanket(ctx)
+            paw(ctx, CGPoint(x: 46, y: 68), rx: 6, ry: 4.5)
+            paw(ctx, CGPoint(x: 74, y: 68), rx: 6, ry: 4.5)
         default:
             tail(ctx, base: CGPoint(x: 84, y: 74), angle: -0.5 + wag)
             outlined(ctx, oval(60, 75, 29, 21), Self.fur)
@@ -114,6 +152,14 @@ private struct CorgiDrawing {
                 phone(ctx)
                 paw(ctx, CGPoint(x: 48, y: 80), rx: 6, ry: 5)
                 paw(ctx, CGPoint(x: 72, y: 80), rx: 6, ry: 5)
+            } else if pose == .ball {
+                head(ctx, center: CGPoint(x: 60, y: 40), tilt: -0.08 + (excited ? sin(time * 9) * 0.06 : 0))
+                ball(ctx)
+                paw(ctx, CGPoint(x: 47, y: 80), rx: 5, ry: 6)
+                paw(ctx, CGPoint(x: 73, y: 80), rx: 5, ry: 6)
+            } else if pose == .scarf {
+                head(ctx, center: CGPoint(x: 60, y: 40))
+                winterGear(ctx)
             } else {
                 head(ctx, center: CGPoint(x: 60, y: 40), tilt: excited ? sin(time * 9) * 0.06 : 0)
             }
@@ -222,6 +268,103 @@ private struct CorgiDrawing {
         ctx.rotate(by: .radians(angle))
         outlined(ctx, oval(9, 0, 11, 6.5), Self.fur)
         ctx.fill(oval(16, 0, 4, 3.5), with: .color(Self.cream))
+    }
+
+    /// A coral plaid wrapped up to the chin.
+    private func blanket(_ ctx: GraphicsContext) {
+        var shape = Path()
+        shape.move(to: CGPoint(x: 22, y: 98))
+        shape.addQuadCurve(to: CGPoint(x: 32, y: 68), control: CGPoint(x: 20, y: 76))
+        shape.addQuadCurve(to: CGPoint(x: 88, y: 68), control: CGPoint(x: 60, y: 60))
+        shape.addQuadCurve(to: CGPoint(x: 98, y: 98), control: CGPoint(x: 100, y: 76))
+        shape.closeSubpath()
+        ctx.fill(shape, with: .color(Theme.coral))
+        var stripes = ctx
+        stripes.clip(to: shape)
+        var lines = Path()
+        for x in stride(from: 32.0, through: 88, by: 14) {
+            lines.move(to: CGPoint(x: x, y: 50))
+            lines.addLine(to: CGPoint(x: x, y: 100))
+        }
+        for y in stride(from: 72.0, through: 96, by: 12) {
+            lines.move(to: CGPoint(x: 10, y: y))
+            lines.addLine(to: CGPoint(x: 110, y: y))
+        }
+        stripes.stroke(lines, with: .color(.white.opacity(0.4)), lineWidth: 3)
+        ctx.stroke(shape, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: 2.6, lineJoin: .round))
+    }
+
+    /// A periwinkle bowl heaped with kibble.
+    private func bowl(_ ctx: GraphicsContext) {
+        for (x, y) in [(47.0, 81.0), (54.0, 78.5), (61.0, 79.5), (68.0, 78.5), (73.0, 81.0), (57.0, 81.5)] {
+            outlined(ctx, oval(x, y, 3.4, 3), Self.kibble, width: 1.5)
+        }
+        var dish = Path()
+        dish.move(to: CGPoint(x: 38, y: 82))
+        dish.addLine(to: CGPoint(x: 82, y: 82))
+        dish.addQuadCurve(to: CGPoint(x: 75, y: 98), control: CGPoint(x: 82, y: 96))
+        dish.addLine(to: CGPoint(x: 45, y: 98))
+        dish.addQuadCurve(to: CGPoint(x: 38, y: 82), control: CGPoint(x: 38, y: 96))
+        dish.closeSubpath()
+        outlined(ctx, dish, Theme.periwinkle)
+        ctx.draw(Text("POCHI").font(.system(size: 6, weight: .heavy)).foregroundStyle(.white), at: CGPoint(x: 60, y: 90))
+    }
+
+    /// A coral beanie with a pompom, and a matching scarf with a loose end.
+    private func winterGear(_ ctx: GraphicsContext) {
+        var beanie = Path()
+        beanie.move(to: CGPoint(x: 36, y: 30))
+        beanie.addQuadCurve(to: CGPoint(x: 84, y: 30), control: CGPoint(x: 60, y: 2))
+        beanie.closeSubpath()
+        outlined(ctx, beanie, Theme.coral)
+        outlined(ctx, Path(roundedRect: CGRect(x: 33, y: 26, width: 54, height: 9), cornerRadius: 4.5), Self.cream)
+        outlined(ctx, oval(60, 11, 5, 5), Self.cream)
+
+        let end = Path(roundedRect: CGRect(x: 66, y: 63, width: 9, height: 22), cornerRadius: 3)
+        outlined(ctx, end, Theme.coral)
+        outlined(ctx, Path(roundedRect: CGRect(x: 38, y: 59, width: 44, height: 10), cornerRadius: 5), Theme.coral)
+        var stripes = Path()
+        for y in [74.0, 79.0] {
+            stripes.move(to: CGPoint(x: 67.5, y: y))
+            stripes.addLine(to: CGPoint(x: 73.5, y: y))
+        }
+        ctx.stroke(stripes, with: .color(.white.opacity(0.7)), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+    }
+
+    /// The front of a wicker basket, with its rim.
+    private func basket(_ ctx: GraphicsContext) {
+        var front = Path()
+        front.move(to: CGPoint(x: 20, y: 66))
+        front.addLine(to: CGPoint(x: 100, y: 66))
+        front.addQuadCurve(to: CGPoint(x: 86, y: 98), control: CGPoint(x: 100, y: 92))
+        front.addLine(to: CGPoint(x: 34, y: 98))
+        front.addQuadCurve(to: CGPoint(x: 20, y: 66), control: CGPoint(x: 20, y: 92))
+        front.closeSubpath()
+        ctx.fill(front, with: .color(Self.wicker))
+        var weave = ctx
+        weave.clip(to: front)
+        var lines = Path()
+        for (row, y) in [76.0, 84.0, 92.0].enumerated() {
+            lines.move(to: CGPoint(x: 10, y: y))
+            lines.addLine(to: CGPoint(x: 110, y: y))
+            for x in stride(from: 24.0 + Double(row % 2) * 6, through: 100, by: 12) {
+                lines.move(to: CGPoint(x: x, y: y - 6))
+                lines.addLine(to: CGPoint(x: x, y: y - 2))
+            }
+        }
+        weave.stroke(lines, with: .color(Self.wickerShadow), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+        ctx.stroke(front, with: .color(Theme.darkInk), style: StrokeStyle(lineWidth: 2.6, lineJoin: .round))
+        outlined(ctx, Path(roundedRect: CGRect(x: 15, y: 61, width: 90, height: 9), cornerRadius: 4.5), Self.wicker)
+    }
+
+    private func ball(_ ctx: GraphicsContext) {
+        outlined(ctx, oval(60, 81, 12, 12), Self.tennis)
+        var seam = Path()
+        seam.move(to: CGPoint(x: 53, y: 72))
+        seam.addQuadCurve(to: CGPoint(x: 53, y: 90), control: CGPoint(x: 60, y: 81))
+        seam.move(to: CGPoint(x: 67, y: 72))
+        seam.addQuadCurve(to: CGPoint(x: 67, y: 90), control: CGPoint(x: 60, y: 81))
+        ctx.stroke(seam, with: .color(.white), style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
     }
 
     private func paw(_ ctx: GraphicsContext, _ at: CGPoint, rx: Double, ry: Double) {
@@ -503,11 +646,16 @@ enum CorgiMood {
         switch self {
         case .empty: return .box
         case .nothing:
-            // Doomscrolling by day, asleep at night.
+            // Asleep at night; by day, doomscrolling or rolled up in a plaid. Which one changes every day.
             let hour = Day.calendar.component(.hour, from: .now)
-            return hour >= 22 || hour < 7 ? .sleeping : .phone
-        case .started: return .sitting
-        case .halfway: return .standing
+            if hour >= 22 || hour < 7 { return Self.dayIndex % 2 == 0 ? .sleeping : .basket }
+            return Self.dayIndex % 2 == 0 ? .phone : .blanket
+        case .started:
+            // Bundled up in winter; otherwise sitting or snacking, one day out of two.
+            let month = Day.calendar.component(.month, from: .now)
+            if [12, 1, 2].contains(month) { return .scarf }
+            return Self.dayIndex % 2 == 0 ? .sitting : .bowl
+        case .halfway: return .ball
         case .perfect: return .happy
         case .sulking: return .sulking
         }
@@ -526,7 +674,8 @@ enum CorgiMood {
 /// Every pose side by side. Launch with `-corgiGallery` to see it.
 struct CorgiGallery: View {
     private let poses: [(CorgiPose, String)] = [
-        (.box, "BOX"), (.sleeping, "SLEEPING"), (.phone, "PHONE"), (.sitting, "SITTING"), (.sulking, "SULKING"), (.standing, "STANDING"), (.happy, "HAPPY"),
+        (.box, "BOX"), (.sleeping, "SLEEPING"), (.basket, "BASKET"), (.phone, "PHONE"), (.blanket, "BLANKET"),
+        (.sitting, "SITTING"), (.bowl, "BOWL"), (.scarf, "SCARF"), (.sulking, "SULKING"), (.ball, "BALL"), (.happy, "HAPPY"),
     ]
 
     var body: some View {

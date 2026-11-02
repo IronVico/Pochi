@@ -72,7 +72,7 @@ struct WorldView: View {
 
     private var pochi: CorgiPose {
         if pettedUntil > .now { return .happy }
-        return pose == .box ? .standing : pose
+        return pose == .box ? .sitting : pose
     }
 
     var body: some View {
@@ -88,7 +88,7 @@ struct WorldView: View {
             }
             // Pochi trots a little around its spot, unless it is lying down.
             let pochiHeight = 50 * scale
-            let still = [.sleeping, .sulking, .phone].contains(pochi)
+            let still = [.sleeping, .sulking, .phone, .blanket, .basket, .bowl].contains(pochi)
             PhaseAnimator([-1.0, 1.0]) { side in
                 PochiView(pose: pochi, size: pochiHeight)
                     .offset(x: still ? 0 : side * 10 * scale)
@@ -175,11 +175,11 @@ struct NicheGallery: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
                 ForEach(TimeOfDay.allCases, id: \.self) { phase in
                     VStack(spacing: 4) {
-                        WorldView(level: 10, trees: 12, pose: .standing, phase: phase)
+                        WorldView(level: 10, trees: 12, pose: .sitting, phase: phase)
                         Text("\(phase)".uppercased()).font(Theme.mono(11)).foregroundStyle(.secondary)
                     }
                 }
-                ForEach([CorgiPose.phone, .sleeping, .sitting, .happy, .sulking], id: \.self) { pose in
+                ForEach([CorgiPose.phone, .blanket, .sleeping, .basket, .sitting, .bowl, .scarf, .ball, .happy, .sulking], id: \.self) { pose in
                     VStack(spacing: 4) {
                         WorldView(level: 4, trees: 3, pose: pose, phase: .day)
                         Text("\(pose)".uppercased()).font(Theme.mono(11)).foregroundStyle(.secondary)
@@ -187,7 +187,7 @@ struct NicheGallery: View {
                 }
                 ForEach(1...10, id: \.self) { level in
                     VStack(spacing: 4) {
-                        WorldView(level: level, trees: level + 1, pose: .standing)
+                        WorldView(level: level, trees: level + 1, pose: .sitting)
                         Text("NIV. \(level)").font(Theme.mono(11)).foregroundStyle(.secondary)
                     }
                 }
